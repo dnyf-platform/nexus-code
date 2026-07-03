@@ -1,0 +1,30 @@
+:root[data-theme="high-contrast"] {
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-tertiary: #1a1a1a;
+    --bg-hover: #333333;
+    --bg-active: #444444;
+    --bg-selection: #ffff00;
+    
+    --text-primary: #ffffff;
+    --text-secondary: #ffff00;
+    --text-muted: #cccccc;
+    
+    --border-color: #ffffff;
+    --border-focus: #ffff00;
+    
+    --accent-primary: #ffff00;
+    --accent-hover: #ffcc00;
+    --accent-active: #ffaa00;
+    
+    --success: #00ff00;
+    --warning: #ffff00;
+    --error: #ff0000;
+    --info: #00ffff;
+    
+    --scrollbar-bg: #000000;
+    --scrollbar-thumb: #ffffff;
+    --scrollbar-thumb-hover: #ffff00;
+    
+    --font-size: 16px;
+}
