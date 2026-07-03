@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ============================================
-// NEXUSCODE PRODUCTION SERVER v2.0
-// Alpha Capabilities - Production Grade
+// NEXUSCODE PRODUCTION SERVER v3.0
+// Alpha-Ready | Production-Grade | Full-Stack
 // ============================================
 
 const http = require('http');
@@ -13,51 +13,97 @@ const { exec, spawn } = require('child_process');
 const zlib = require('zlib');
 const url = require('url');
 const os = require('os');
+const cluster = require('cluster');
 
 // ============================================
 // CONFIGURATION
 // ============================================
 const CONFIG = {
-    port: process.env.PORT || 8080,
+    // Server
+    port: parseInt(process.env.PORT) || 8080,
     host: process.env.HOST || '0.0.0.0',
     env: process.env.NODE_ENV || 'development',
+    workers: process.env.WORKERS || (os.cpus().length > 1 ? os.cpus().length : 1),
     
     // Directories
     rootDir: __dirname,
     dataDir: path.join(__dirname, 'data'),
     logsDir: path.join(__dirname, 'logs'),
+    uploadDir: path.join(__dirname, 'uploads'),
+    backupDir: path.join(__dirname, 'backups'),
     
     // Security
     jwtSecret: process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex'),
-    rateLimitWindow: 60000, // 1 minute
-    rateLimitMax: 100,      // max requests per window
-    maxBodySize: 50 * 1024 * 1024, // 50MB
+    jwtExpiry: '24h',
+    rateLimitWindow: 60000,
+    rateLimitMax: 100,
+    maxBodySize: 50 * 1024 * 1024,
+    bcryptRounds: 12,
     
-    // SSL (for production)
-    sslKey: process.env.SSL_KEY || null,
-    sslCert: process.env.SSL_CERT || null,
-    
-    // Session
-    sessionTimeout: 3600000, // 1 hour
-    
-    // Terminal
-    maxTerminalSessions: 10,
+    // SSL
+    sslEnabled: process.env.SSL_ENABLED === 'true',
+    sslKey: process.env.SSL_KEY_PATH || null,
+    sslCert: process.env.SSL_CERT_PATH || null,
     
     // Cache
     cacheEnabled: true,
-    cacheTTL: 3600000, // 1 hour
+    cacheTTL: 3600000,
+    cacheMaxSize: 1000,
+    
+    // Compression
+    compressionEnabled: true,
+    compressionLevel: 6,
+    
+    // CORS
+    corsEnabled: true,
+    corsOrigin: '*',
     
     // Features
     enableAuth: process.env.ENABLE_AUTH === 'true',
     enableWebSocket: true,
-    enableCompression: true,
-    enableCORS: true,
     enableLogging: true,
+    enableMetrics: true,
+    enableBackup: true,
     
     // Admin
     adminUser: process.env.ADMIN_USER || 'admin',
     adminPass: process.env.ADMIN_PASS || crypto.randomBytes(16).toString('hex'),
+    
+    // Terminal
+    maxTerminalSessions: 20,
+    terminalTimeout: 1800000,
+    
+    // Git
+    gitEnabled: true,
+    gitDefaultBranch: 'main',
+    
+    // Build
+    buildEnabled: true,
+    buildTimeout: 300000,
 };
+
+// ============================================
+// CLUSTER MASTER
+// ============================================
+if (cluster.isMaster && CONFIG.env === 'production') {
+    Logger.init();
+    Logger.info(`Master ${process.pid} starting ${CONFIG.workers} workers`);
+    
+    for (let i = 0; i < CONFIG.workers; i++) {
+        cluster.fork();
+    }
+    
+    cluster.on('exit', (worker, code) => {
+        Logger.warn(`Worker ${worker.process.pid} died (${code}), restarting...`);
+        cluster.fork();
+    });
+    
+    cluster.on('online', (worker) => {
+        Logger.info(`Worker ${worker.process.pid} online`);
+    });
+    
+    return;
+}
 
 // ============================================
 // LOGGER SYSTEM
@@ -67,41 +113,38 @@ class Logger {
     static currentLevel = CONFIG.env === 'production' ? 1 : 0;
     
     static init() {
-        if (!fs.existsSync(CONFIG.logsDir)) {
-            fs.mkdirSync(CONFIG.logsDir, { recursive: true });
-        }
+        ['data', 'logs', 'uploads', 'backups'].forEach(dir => {
+            const p = path.join(CONFIG.rootDir, dir);
+            if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
+        });
     }
     
-    static formatMessage(level, message, data = null) {
-        const timestamp = new Date().toISOString();
+    static format(level, msg, data = null) {
+        const ts = new Date().toISOString();
         const pid = process.pid;
-        const memory = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
-        let msg = `[${timestamp}] [${level}] [PID:${pid}] [MEM:${memory}MB] ${message}`;
-        if (data) msg += ' ' + JSON.stringify(data);
-        return msg;
+        const mem = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
+        let m = `[${ts}] [${level}] [PID:${pid}] [MEM:${mem}MB] ${msg}`;
+        if (data) m += ' | ' + JSON.stringify(data);
+        return m;
     }
     
-    static log(level, message, data = null) {
+    static log(level, msg, data = null) {
         if (this.levels[level] < this.currentLevel) return;
-        const msg = this.formatMessage(level, message, data);
+        const m = this.format(level, msg, data);
         
-        switch(level) {
-            case 'ERROR': console.error('\x1b[31m' + msg + '\x1b[0m'); break;
-            case 'WARN': console.warn('\x1b[33m' + msg + '\x1b[0m'); break;
-            case 'INFO': console.log('\x1b[36m' + msg + '\x1b[0m'); break;
-            case 'DEBUG': console.log('\x1b[90m' + msg + '\x1b[0m'); break;
-        }
+        const colors = { ERROR: '\x1b[31m', WARN: '\x1b[33m', INFO: '\x1b[36m', DEBUG: '\x1b[90m' };
+        console.log((colors[level] || '') + m + '\x1b[0m');
         
         if (CONFIG.enableLogging) {
             const logFile = path.join(CONFIG.logsDir, `server-${new Date().toISOString().split('T')[0]}.log`);
-            fs.appendFileSync(logFile, msg + '\n');
+            fs.appendFileSync(logFile, m + '\n');
         }
     }
     
-    static debug(msg, data) { this.log('DEBUG', msg, data); }
-    static info(msg, data) { this.log('INFO', msg, data); }
-    static warn(msg, data) { this.log('WARN', msg, data); }
-    static error(msg, data) { this.log('ERROR', msg, data); }
+    static debug(msg, d) { this.log('DEBUG', msg, d); }
+    static info(msg, d) { this.log('INFO', msg, d); }
+    static warn(msg, d) { this.log('WARN', msg, d); }
+    static error(msg, d) { this.log('ERROR', msg, d); }
 }
 
 // ============================================
@@ -111,95 +154,83 @@ class AuthSystem {
     constructor() {
         this.tokens = new Map();
         this.users = new Map();
-        this.initDefaultAdmin();
+        this.blacklist = new Set();
+        this.initAdmin();
+        this.startCleanup();
     }
     
-    initDefaultAdmin() {
+    initAdmin() {
         const salt = crypto.randomBytes(16).toString('hex');
-        const hash = this.hashPassword(CONFIG.adminPass, salt);
-        this.users.set(CONFIG.adminUser, { 
-            username: CONFIG.adminUser, 
-            passwordHash: hash, 
-            salt, 
-            role: 'admin',
-            created: Date.now()
+        const hash = crypto.pbkdf2Sync(CONFIG.adminPass, salt, 10000, 64, 'sha512').toString('hex');
+        this.users.set(CONFIG.adminUser, {
+            username: CONFIG.adminUser, passwordHash: hash, salt,
+            role: 'admin', created: Date.now(), lastLogin: null
         });
-        Logger.info(`Admin user created: ${CONFIG.adminUser}`);
-    }
-    
-    hashPassword(password, salt) {
-        return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-    }
-    
-    verifyPassword(password, user) {
-        const hash = this.hashPassword(password, user.salt);
-        return hash === user.passwordHash;
+        Logger.info(`Admin user ready: ${CONFIG.adminUser}`);
     }
     
     authenticate(username, password) {
         const user = this.users.get(username);
         if (!user) return null;
-        if (!this.verifyPassword(password, user)) return null;
+        const hash = crypto.pbkdf2Sync(password, user.salt, 10000, 64, 'sha512').toString('hex');
+        if (hash !== user.passwordHash) return null;
         
-        const token = crypto.randomBytes(32).toString('hex');
-        const session = {
-            token,
-            username,
-            role: user.role,
-            created: Date.now(),
-            expires: Date.now() + CONFIG.sessionTimeout,
-            ip: null
-        };
+        user.lastLogin = Date.now();
+        const token = crypto.randomBytes(48).toString('hex');
+        const session = { token, username, role: user.role, created: Date.now(), ip: null };
         this.tokens.set(token, session);
         return { token, user: { username, role: user.role } };
     }
     
     validateToken(token) {
+        if (this.blacklist.has(token)) return null;
         const session = this.tokens.get(token);
         if (!session) return null;
-        if (Date.now() > session.expires) {
-            this.tokens.delete(token);
-            return null;
-        }
         return session;
     }
     
     revokeToken(token) {
+        this.blacklist.add(token);
         return this.tokens.delete(token);
     }
     
     createUser(username, password, role = 'user') {
-        if (this.users.has(username)) return false;
+        if (this.users.has(username)) return { success: false, error: 'User exists' };
         const salt = crypto.randomBytes(16).toString('hex');
-        const hash = this.hashPassword(password, salt);
-        this.users.set(username, { username, passwordHash: hash, salt, role, created: Date.now() });
-        return true;
+        const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+        this.users.set(username, { username, passwordHash: hash, salt, role, created: Date.now(), lastLogin: null });
+        return { success: true };
+    }
+    
+    startCleanup() {
+        setInterval(() => {
+            const now = Date.now();
+            for (const [token, session] of this.tokens) {
+                if (now - session.created > 86400000) this.tokens.delete(token);
+            }
+            if (this.blacklist.size > 1000) this.blacklist.clear();
+        }, 3600000);
     }
     
     middleware() {
         return (req, res, next) => {
             if (!CONFIG.enableAuth) return next();
+            const publicPaths = ['/api/system/ping', '/api/auth/login', '/api/auth/register'];
+            const pathname = url.parse(req.url).pathname;
+            if (publicPaths.includes(pathname) || !pathname.startsWith('/api/')) return next();
             
-            const publicPaths = ['/', '/home.html', '/index.html', '/api/system/ping', '/api/auth/login'];
-            if (publicPaths.includes(req.url.split('?')[0]) || req.url.startsWith('/css/') || req.url.startsWith('/js/') || req.url.startsWith('/terminal/')) {
-                return next();
-            }
-            
-            const authHeader = req.headers.authorization;
-            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            const auth = req.headers.authorization;
+            if (!auth?.startsWith('Bearer ')) {
                 res.writeHead(401, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Authentication required' }));
                 return;
             }
-            
-            const token = authHeader.split(' ')[1];
-            const session = this.validateToken(token);
+            const session = this.validateToken(auth.split(' ')[1]);
             if (!session) {
                 res.writeHead(401, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Invalid or expired token' }));
                 return;
             }
-            
             req.user = session;
             next();
         };
@@ -210,35 +241,17 @@ class AuthSystem {
 // RATE LIMITER
 // ============================================
 class RateLimiter {
-    constructor() {
-        this.clients = new Map();
-        this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
-    }
+    constructor() { this.clients = new Map(); }
     
     check(ip) {
         const now = Date.now();
-        let client = this.clients.get(ip);
-        
-        if (!client || (now - client.windowStart) > CONFIG.rateLimitWindow) {
-            client = { windowStart: now, count: 0 };
-            this.clients.set(ip, client);
+        let c = this.clients.get(ip);
+        if (!c || (now - c.window) > CONFIG.rateLimitWindow) {
+            c = { window: now, count: 0 };
+            this.clients.set(ip, c);
         }
-        
-        client.count++;
-        
-        if (client.count > CONFIG.rateLimitMax) {
-            return false;
-        }
-        return true;
-    }
-    
-    cleanup() {
-        const now = Date.now();
-        for (const [ip, client] of this.clients) {
-            if ((now - client.windowStart) > CONFIG.rateLimitWindow * 2) {
-                this.clients.delete(ip);
-            }
-        }
+        c.count++;
+        return c.count <= CONFIG.rateLimitMax;
     }
     
     middleware() {
@@ -255,187 +268,285 @@ class RateLimiter {
 }
 
 // ============================================
-// CACHE SYSTEM
+// CACHE SYSTEM (LRU)
 // ============================================
 class CacheSystem {
     constructor() {
         this.cache = new Map();
-        this.stats = { hits: 0, misses: 0 };
+        this.access = new Map();
+        this.hits = 0;
+        this.misses = 0;
     }
     
     get(key) {
         const entry = this.cache.get(key);
-        if (!entry) { this.stats.misses++; return null; }
-        if (Date.now() > entry.expires) { this.cache.delete(key); this.stats.misses++; return null; }
-        this.stats.hits++;
+        if (!entry || Date.now() > entry.expires) {
+            if (entry) this.cache.delete(key);
+            this.misses++;
+            return null;
+        }
+        this.access.set(key, Date.now());
+        this.hits++;
         return entry.data;
     }
     
     set(key, data, ttl = CONFIG.cacheTTL) {
+        if (this.cache.size >= CONFIG.cacheMaxSize) this.evict();
         this.cache.set(key, { data, expires: Date.now() + ttl });
+    }
+    
+    evict() {
+        let oldest = null;
+        for (const [key, time] of this.access) {
+            if (!oldest || time < oldest.time) oldest = { key, time };
+        }
+        if (oldest) { this.cache.delete(oldest.key); this.access.delete(oldest.key); }
     }
     
     invalidate(pattern) {
         for (const key of this.cache.keys()) {
-            if (key.includes(pattern)) this.cache.delete(key);
+            if (key.includes(pattern)) { this.cache.delete(key); this.access.delete(key); }
         }
     }
     
-    getStats() {
-        const total = this.stats.hits + this.stats.misses;
+    stats() {
+        const total = this.hits + this.misses;
         return {
-            size: this.cache.size,
-            hits: this.stats.hits,
-            misses: this.stats.misses,
-            hitRate: total > 0 ? ((this.stats.hits / total) * 100).toFixed(1) + '%' : '0%'
+            size: this.cache.size, hits: this.hits, misses: this.misses,
+            hitRate: total > 0 ? ((this.hits / total) * 100).toFixed(1) + '%' : '0%'
         };
     }
 }
 
 // ============================================
-// DATABASE (JSON File-based)
+// DATABASE (JSON with atomic writes)
 // ============================================
 class Database {
     constructor(name) {
         this.name = name;
-        this.filePath = path.join(CONFIG.dataDir, `${name}.json`);
+        this.path = path.join(CONFIG.dataDir, `${name}.json`);
         this.data = {};
+        this.writeQueue = [];
+        this.writing = false;
         this.load();
     }
     
     load() {
         try {
-            if (fs.existsSync(this.filePath)) {
-                this.data = JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
+            if (fs.existsSync(this.path)) {
+                this.data = JSON.parse(fs.readFileSync(this.path, 'utf8'));
             }
-        } catch (e) {
-            Logger.warn(`Failed to load database: ${this.name}`, e.message);
-            this.data = {};
-        }
+        } catch (e) { Logger.warn(`DB load failed: ${this.name}`, e.message); }
     }
     
-    save() {
-        try {
-            if (!fs.existsSync(CONFIG.dataDir)) {
-                fs.mkdirSync(CONFIG.dataDir, { recursive: true });
-            }
-            fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2));
-        } catch (e) {
-            Logger.error(`Failed to save database: ${this.name}`, e.message);
+    async save() {
+        this.writeQueue.push(true);
+        if (!this.writing) this.flushWrites();
+    }
+    
+    async flushWrites() {
+        this.writing = true;
+        while (this.writeQueue.length > 0) {
+            this.writeQueue.shift();
+            try {
+                const tmp = this.path + '.tmp';
+                fs.writeFileSync(tmp, JSON.stringify(this.data, null, 2));
+                fs.renameSync(tmp, this.path);
+            } catch (e) { Logger.error(`DB save failed: ${this.name}`, e.message); }
         }
+        this.writing = false;
     }
     
     get(key) { return this.data[key]; }
     set(key, value) { this.data[key] = value; this.save(); }
     delete(key) { delete this.data[key]; this.save(); }
     getAll() { return { ...this.data }; }
-    clear() { this.data = {}; this.save(); }
+}
+
+// ============================================
+// WEBSOCKET MANAGER
+// ============================================
+class WebSocketManager {
+    constructor() {
+        this.sessions = new Map();
+    }
+    
+    handleUpgrade(req, socket, head) {
+        if (req.headers['upgrade'] !== 'websocket') { socket.destroy(); return; }
+        
+        const key = req.headers['sec-websocket-key'];
+        const accept = crypto.createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
+        
+        socket.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ' + accept + '\r\n\r\n');
+        
+        const sessionId = crypto.randomUUID();
+        this.sessions.set(sessionId, { socket, created: Date.now() });
+        Logger.info(`WebSocket connected: ${sessionId}`);
+        
+        socket.on('data', (buf) => this.handleMessage(sessionId, buf));
+        socket.on('end', () => { this.sessions.delete(sessionId); Logger.info(`WebSocket closed: ${sessionId}`); });
+        socket.on('error', () => { this.sessions.delete(sessionId); });
+    }
+    
+    handleMessage(sessionId, buf) {
+        try {
+            const opcode = buf[0] & 0x0f;
+            if (opcode === 0x8) { this.sessions.get(sessionId)?.socket.end(); return; }
+            if (opcode !== 0x1) return;
+            
+            const payload = this.decodeFrame(buf);
+            const msg = JSON.parse(payload);
+            
+            switch(msg.type) {
+                case 'terminal': this.handleTerminal(sessionId, msg); break;
+                case 'ping': this.send(sessionId, { type: 'pong', time: Date.now() }); break;
+            }
+        } catch (e) { Logger.error('WS error:', e.message); }
+    }
+    
+    decodeFrame(buf) {
+        const masked = (buf[1] & 0x80) !== 0;
+        let len = buf[1] & 0x7f, offset = 2;
+        if (len === 126) { len = buf.readUInt16BE(2); offset = 4; }
+        else if (len === 127) { len = Number(buf.readBigUInt64BE(2)); offset = 10; }
+        let mask = null;
+        if (masked) { mask = buf.slice(offset, offset + 4); offset += 4; }
+        let payload = buf.slice(offset, offset + len);
+        if (mask) { for (let i = 0; i < payload.length; i++) payload[i] ^= mask[i % 4]; }
+        return payload.toString('utf8');
+    }
+    
+    handleTerminal(sessionId, msg) {
+        const result = CommandExecutor.execute(msg.command || '');
+        this.send(sessionId, { type: 'terminal-output', output: result.output, command: msg.command });
+    }
+    
+    send(sessionId, data) {
+        const session = this.sessions.get(sessionId);
+        if (!session) return;
+        const payload = Buffer.from(JSON.stringify(data));
+        const frame = Buffer.alloc(2 + payload.length);
+        frame[0] = 0x81; frame[1] = payload.length;
+        payload.copy(frame, 2);
+        session.socket.write(frame);
+    }
+}
+
+// ============================================
+// COMMAND EXECUTOR
+// ============================================
+class CommandExecutor {
+    static execute(cmd) {
+        const parts = cmd.trim().split(/\s+/);
+        const command = parts[0]?.toLowerCase();
+        const args = parts.slice(1);
+        
+        const commands = {
+            help: () => 'Available: help, ls, pwd, cat, echo, date, whoami, uname, node, git, npm, python, stats, clear',
+            ls: () => 'index.html  styles.css  script.js  README.md  package.json  server.js',
+            pwd: () => '/home/user/project',
+            cat: () => args[0] ? `Content of ${args[0]}:\n// File content here` : 'Usage: cat <file>',
+            echo: () => args.join(' '),
+            date: () => new Date().toString(),
+            whoami: () => 'developer',
+            uname: () => `Linux ${os.hostname()} ${os.release()} ${os.arch()}`,
+            node: () => args[0] === '--version' ? process.version : 'Node.js runtime',
+            git: () => args[0] === 'status' ? 'On branch main\nnothing to commit, working tree clean' : 'git: use status, log, branch',
+            npm: () => args[0] === '--version' ? '10.2.0' : 'npm (simulated)',
+            python: () => args[0] === '--version' ? 'Python 3.11.2' : 'Python runtime',
+            stats: () => `CPU: ${os.cpus().length} cores | Mem: ${(os.freemem()/1024/1024/1024).toFixed(1)}GB free | Uptime: ${Math.floor(process.uptime())}s`,
+            clear: () => '',
+        };
+        
+        const handler = commands[command];
+        return { output: handler ? handler() : `Command not found: ${command}`, command: cmd };
+    }
 }
 
 // ============================================
 // API ROUTER
 // ============================================
 class APIRouter {
-    constructor(auth, rateLimiter, cache, db) {
-        this.auth = auth;
-        this.rateLimiter = rateLimiter;
-        this.cache = cache;
-        this.db = db;
-        this.routes = new Map();
+    constructor(auth, rateLimiter, cache, db, ws) {
+        this.auth = auth; this.rateLimiter = rateLimiter;
+        this.cache = cache; this.db = db; this.ws = ws;
+        this.routes = [];
         this.setupRoutes();
     }
     
     setupRoutes() {
         // Auth
-        this.route('POST', '/api/auth/login', this.handleLogin.bind(this));
-        this.route('POST', '/api/auth/logout', this.handleLogout.bind(this));
-        this.route('GET', '/api/auth/me', this.handleMe.bind(this));
+        this.add('POST', '/api/auth/login', (req, res) => this.handleLogin(req, res));
+        this.add('POST', '/api/auth/logout', (req, res) => this.handleLogout(req, res));
+        this.add('POST', '/api/auth/register', (req, res) => this.handleRegister(req, res));
+        this.add('GET', '/api/auth/me', (req, res) => this.handleMe(req, res));
         
         // System
-        this.route('GET', '/api/system/info', this.handleSystemInfo.bind(this));
-        this.route('GET', '/api/system/ping', this.handlePing.bind(this));
-        this.route('GET', '/api/system/stats', this.handleStats.bind(this));
-        this.route('GET', '/api/system/processes', this.handleProcesses.bind(this));
+        this.add('GET', '/api/system/info', (req, res) => this.sendJSON(res, 200, this.getSystemInfo()));
+        this.add('GET', '/api/system/ping', (req, res) => this.sendJSON(res, 200, { pong: true, time: Date.now(), uptime: process.uptime(), env: CONFIG.env }));
+        this.add('GET', '/api/system/metrics', (req, res) => this.sendJSON(res, 200, { cache: cache.stats(), memory: process.memoryUsage(), uptime: process.uptime() }));
+        this.add('GET', '/api/system/processes', (req, res) => this.handleProcesses(req, res));
         
         // Files
-        this.route('GET', '/api/files', this.handleListFiles.bind(this));
-        this.route('POST', '/api/files/read', this.handleReadFile.bind(this));
-        this.route('POST', '/api/files/write', this.handleWriteFile.bind(this));
-        this.route('POST', '/api/files/delete', this.handleDeleteFile.bind(this));
-        this.route('POST', '/api/files/search', this.handleSearchFiles.bind(this));
-        this.route('GET', '/api/files/stats', this.handleFileStats.bind(this));
-        this.route('POST', '/api/files/upload', this.handleUpload.bind(this));
+        this.add('GET', '/api/files', (req, res) => this.handleListFiles(req, res));
+        this.add('POST', '/api/files/read', (req, res) => this.handleReadFile(req, res));
+        this.add('POST', '/api/files/write', (req, res) => this.handleWriteFile(req, res));
+        this.add('POST', '/api/files/delete', (req, res) => this.handleDeleteFile(req, res));
+        this.add('POST', '/api/files/search', (req, res) => this.handleSearchFiles(req, res));
+        this.add('POST', '/api/files/upload', (req, res) => this.handleUpload(req, res));
+        this.add('GET', '/api/files/stats', (req, res) => this.handleFileStats(req, res));
         
         // Terminal
-        this.route('POST', '/api/terminal/create', this.handleTerminalCreate.bind(this));
-        this.route('POST', '/api/terminal/execute', this.handleTerminalExecute.bind(this));
-        this.route('GET', '/api/terminal/sessions', this.handleTerminalSessions.bind(this));
+        this.add('POST', '/api/terminal/create', (req, res) => this.sendJSON(res, 200, { sessionId: crypto.randomUUID() }));
+        this.add('POST', '/api/terminal/execute', (req, res) => this.handleTerminal(req, res));
         
         // Projects
-        this.route('GET', '/api/project/export', this.handleExportProject.bind(this));
-        this.route('POST', '/api/project/import', this.handleImportProject.bind(this));
-        this.route('POST', '/api/project/create', this.handleCreateProject.bind(this));
+        this.add('GET', '/api/project/export', (req, res) => this.handleExport(req, res));
+        this.add('POST', '/api/project/import', (req, res) => this.handleImport(req, res));
+        this.add('POST', '/api/project/create', (req, res) => this.handleCreateProject(req, res));
+        this.add('GET', '/api/project/backup', (req, res) => this.handleBackup(req, res));
         
         // Build
-        this.route('POST', '/api/build/start', this.handleBuildStart.bind(this));
-        this.route('GET', '/api/build/status', this.handleBuildStatus.bind(this));
+        this.add('POST', '/api/build/start', (req, res) => this.handleBuild(req, res));
+        this.add('GET', '/api/build/status', (req, res) => this.sendJSON(res, 200, { status: 'idle' }));
         
         // Database
-        this.route('GET', '/api/db/:collection', this.handleDbGetAll.bind(this));
-        this.route('POST', '/api/db/:collection', this.handleDbSet.bind(this));
-        this.route('DELETE', '/api/db/:collection/:key', this.handleDbDelete.bind(this));
+        this.add('GET', '/api/db/:collection', (req, res) => this.sendJSON(res, 200, db.get(req.params.collection) || {}));
+        this.add('POST', '/api/db/:collection', (req, res) => this.handleDbWrite(req, res));
+        
+        // Settings
+        this.add('GET', '/api/settings', (req, res) => this.sendJSON(res, 200, db.get('settings') || {}));
+        this.add('POST', '/api/settings', (req, res) => { db.set('settings', req.body); this.sendJSON(res, 200, { success: true }); });
+        
+        // Templates
+        this.add('GET', '/api/templates', (req, res) => this.sendJSON(res, 200, this.getTemplates()));
     }
     
-    route(method, pattern, handler) {
-        this.routes.set(`${method}:${pattern}`, handler);
+    add(method, pattern, handler) {
+        this.routes.push({ method, pattern, handler });
     }
     
-    async handle(req, res) {
-        const parsedUrl = url.parse(req.url, true);
-        const pathname = parsedUrl.pathname;
-        const method = req.method;
-        
-        // Try exact match first
-        let handler = this.routes.get(`${method}:${pathname}`);
-        
-        // Try pattern matching
-        if (!handler) {
-            for (const [key, h] of this.routes) {
-                const [routeMethod, routePattern] = key.split(':');
-                if (routeMethod === method && this.matchPattern(routePattern, pathname)) {
-                    handler = h;
-                    req.params = this.extractParams(routePattern, pathname);
-                    break;
-                }
+    match(method, pathname) {
+        for (const route of this.routes) {
+            if (route.method !== method) continue;
+            const regex = new RegExp('^' + route.pattern.replace(/:\w+/g, '([^/]+)') + '$');
+            const match = pathname.match(regex);
+            if (match) {
+                const params = {};
+                const keys = route.pattern.match(/:\w+/g) || [];
+                keys.forEach((k, i) => params[k.slice(1)] = match[i + 1]);
+                return { handler: route.handler, params };
             }
         }
-        
-        if (!handler) return false;
-        
-        try {
-            await handler(req, res, parsedUrl);
-        } catch (error) {
-            Logger.error(`API Error: ${pathname}`, error.message);
-            this.sendJSON(res, 500, { error: error.message });
-        }
+        return null;
+    }
+    
+    async handle(req, res, pathname) {
+        const match = this.match(req.method, pathname);
+        if (!match) return false;
+        req.params = match.params;
+        try { await match.handler(req, res); } catch (e) { Logger.error('API Error:', e.message); this.sendJSON(res, 500, { error: e.message }); }
         return true;
-    }
-    
-    matchPattern(pattern, pathname) {
-        const regex = new RegExp('^' + pattern.replace(/:\w+/g, '([^/]+)') + '$');
-        return regex.test(pathname);
-    }
-    
-    extractParams(pattern, pathname) {
-        const params = {};
-        const patternParts = pattern.split('/');
-        const pathParts = pathname.split('/');
-        patternParts.forEach((part, i) => {
-            if (part.startsWith(':')) {
-                params[part.slice(1)] = pathParts[i];
-            }
-        });
-        return params;
     }
     
     sendJSON(res, status, data) {
@@ -443,35 +554,20 @@ class APIRouter {
         res.end(JSON.stringify(data));
     }
     
-    parseBody(req) {
-        return new Promise((resolve, reject) => {
-            let body = '';
-            let size = 0;
-            req.on('data', chunk => {
-                size += chunk.length;
-                if (size > CONFIG.maxBodySize) {
-                    reject(new Error('Request body too large'));
-                    return;
-                }
-                body += chunk;
-            });
-            req.on('end', () => {
-                try { resolve(JSON.parse(body || '{}')); }
-                catch { resolve({}); }
-            });
-            req.on('error', reject);
+    async parseBody(req) {
+        return new Promise((resolve) => {
+            let body = '', size = 0;
+            req.on('data', c => { size += c.length; if (size <= CONFIG.maxBodySize) body += c; });
+            req.on('end', () => { try { resolve(JSON.parse(body || '{}')); } catch { resolve({}); } });
         });
     }
     
-    // ========== HANDLERS ==========
-    
+    // Handlers
     async handleLogin(req, res) {
         const { username, password } = await this.parseBody(req);
         const result = this.auth.authenticate(username, password);
-        if (!result) {
-            return this.sendJSON(res, 401, { error: 'Invalid credentials' });
-        }
-        Logger.info(`User logged in: ${username}`);
+        if (!result) return this.sendJSON(res, 401, { error: 'Invalid credentials' });
+        Logger.info(`Login: ${username}`);
         this.sendJSON(res, 200, result);
     }
     
@@ -481,221 +577,155 @@ class APIRouter {
         this.sendJSON(res, 200, { success: true });
     }
     
-    async handleMe(req, res) {
+    async handleRegister(req, res) {
+        const { username, password } = await this.parseBody(req);
+        if (!username || !password) return this.sendJSON(res, 400, { error: 'Username and password required' });
+        const result = this.auth.createUser(username, password);
+        this.sendJSON(res, result.success ? 201 : 409, result);
+    }
+    
+    handleMe(req, res) {
         if (!req.user) return this.sendJSON(res, 401, { error: 'Not authenticated' });
         this.sendJSON(res, 200, req.user);
     }
     
-    async handleSystemInfo(req, res) {
-        const info = {
-            platform: os.platform(),
-            arch: os.arch(),
-            cpus: os.cpus().length,
-            hostname: os.hostname(),
-            uptime: process.uptime(),
-            memory: {
-                total: (os.totalmem() / 1024 / 1024 / 1024).toFixed(1) + ' GB',
-                free: (os.freemem() / 1024 / 1024 / 1024).toFixed(1) + ' GB',
-                used: ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(1) + ' GB',
-                heapUsed: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1) + ' MB'
-            },
-            node: process.version,
-            pid: process.pid,
-            env: CONFIG.env,
-            version: '2.0.0',
-            cache: cache.getStats()
+    getSystemInfo() {
+        return {
+            platform: os.platform(), arch: os.arch(), cpus: os.cpus().length,
+            hostname: os.hostname(), uptime: process.uptime(),
+            memory: { total: (os.totalmem() / 1024**3).toFixed(1) + 'GB', free: (os.freemem() / 1024**3).toFixed(1) + 'GB' },
+            node: process.version, pid: process.pid, env: CONFIG.env,
+            version: '3.0.0', cache: this.cache.stats()
         };
-        this.sendJSON(res, 200, info);
-    }
-    
-    handlePing(req, res) {
-        this.sendJSON(res, 200, { 
-            pong: true, 
-            time: Date.now(), 
-            uptime: process.uptime(),
-            env: CONFIG.env 
-        });
-    }
-    
-    handleStats(req, res) {
-        this.sendJSON(res, 200, {
-            cache: cache.getStats(),
-            memory: process.memoryUsage(),
-            uptime: process.uptime(),
-            connections: 0
-        });
     }
     
     handleProcesses(req, res) {
-        exec('ps aux --no-headers 2>/dev/null || ps aux 2>/dev/null || echo "Process list unavailable"', (err, stdout) => {
-            if (err) return this.sendJSON(res, 500, { error: err.message });
-            const processes = stdout.trim().split('\n').slice(0, 20);
-            this.sendJSON(res, 200, { processes });
+        exec('ps aux --no-headers 2>/dev/null | head -20', (err, stdout) => {
+            this.sendJSON(res, 200, { processes: err ? ['Process list unavailable'] : stdout.trim().split('\n') });
         });
     }
     
-    async handleListFiles(req, res) {
-        const dir = req.query.dir || '/home/user';
-        const cached = cache.get(`files:${dir}`);
+    handleListFiles(req, res) {
+        const dir = req.query?.dir || '/';
+        const cached = this.cache.get(`files:${dir}`);
         if (cached) return this.sendJSON(res, 200, cached);
-        
-        const files = db.get('files') || {};
-        const result = { dir, files: Object.keys(files).filter(f => f.startsWith(dir)).map(f => ({
-            path: f, name: path.basename(f), size: files[f].length
-        }))};
-        cache.set(`files:${dir}`, result, 10000);
+        const files = this.db.get('files') || {};
+        const result = Object.keys(files).map(f => ({ name: f.split('/').pop(), path: f, size: files[f]?.length || 0 }));
+        this.cache.set(`files:${dir}`, result, 10000);
         this.sendJSON(res, 200, result);
     }
     
     async handleReadFile(req, res) {
-        const { path: filePath } = await this.parseBody(req);
-        const files = db.get('files') || {};
-        const content = files[filePath];
+        const { path: fp } = await this.parseBody(req);
+        const files = this.db.get('files') || {};
+        const content = files[fp];
         if (content === undefined) return this.sendJSON(res, 404, { error: 'File not found' });
-        this.sendJSON(res, 200, { path: filePath, content });
+        this.sendJSON(res, 200, { path: fp, content });
     }
     
     async handleWriteFile(req, res) {
-        const { path: filePath, content } = await this.parseBody(req);
-        const files = db.get('files') || {};
-        files[filePath] = content;
-        db.set('files', files);
-        cache.invalidate('files:');
-        Logger.info(`File written: ${filePath}`);
-        this.sendJSON(res, 200, { success: true, path: filePath });
+        const { path: fp, content } = await this.parseBody(req);
+        if (!fp || content === undefined) return this.sendJSON(res, 400, { error: 'Path and content required' });
+        const files = this.db.get('files') || {};
+        files[fp] = content;
+        this.db.set('files', files);
+        this.cache.invalidate('files:');
+        Logger.info(`File written: ${fp}`);
+        this.sendJSON(res, 200, { success: true, path: fp });
     }
     
     async handleDeleteFile(req, res) {
-        const { path: filePath } = await this.parseBody(req);
-        const files = db.get('files') || {};
-        delete files[filePath];
-        db.set('files', files);
-        cache.invalidate('files:');
+        const { path: fp } = await this.parseBody(req);
+        const files = this.db.get('files') || {};
+        delete files[fp];
+        this.db.set('files', files);
+        this.cache.invalidate('files:');
         this.sendJSON(res, 200, { success: true });
     }
     
     async handleSearchFiles(req, res) {
         const { query } = await this.parseBody(req);
-        const files = db.get('files') || {};
+        const files = this.db.get('files') || {};
         const results = [];
-        for (const [filePath, content] of Object.entries(files)) {
-            if (content.toLowerCase().includes(query?.toLowerCase() || '')) {
-                results.push({ path: filePath, preview: content.substring(0, 200) });
+        for (const [fp, content] of Object.entries(files)) {
+            if (content?.toLowerCase().includes(query?.toLowerCase() || '')) {
+                results.push({ path: fp, preview: content.substring(0, 200) });
             }
         }
         this.sendJSON(res, 200, { query, results, count: results.length });
     }
     
     handleFileStats(req, res) {
-        const files = db.get('files') || {};
+        const files = this.db.get('files') || {};
         const entries = Object.entries(files);
         this.sendJSON(res, 200, {
             totalFiles: entries.length,
-            totalSize: entries.reduce((sum, [,c]) => sum + c.length, 0),
-            totalLines: entries.reduce((sum, [,c]) => sum + c.split('\n').length, 0)
+            totalSize: entries.reduce((s, [,c]) => s + (c?.length || 0), 0),
+            totalLines: entries.reduce((s, [,c]) => s + (c?.split('\n')?.length || 0), 0)
         });
     }
     
     async handleUpload(req, res) {
-        // Handle file upload
-        this.sendJSON(res, 200, { success: true, message: 'Upload handled' });
+        this.sendJSON(res, 200, { success: true, message: 'Upload received' });
     }
     
-    handleTerminalCreate(req, res) {
-        const sessionId = crypto.randomUUID();
-        const sessions = db.get('terminal_sessions') || {};
-        sessions[sessionId] = { created: Date.now(), cwd: '/home/user', history: [] };
-        db.set('terminal_sessions', sessions);
-        this.sendJSON(res, 200, { sessionId });
-    }
-    
-    async handleTerminalExecute(req, res) {
-        const { command, sessionId } = await this.parseBody(req);
-        // Execute command logic (simplified for demo)
-        const result = executeCommand(command);
+    async handleTerminal(req, res) {
+        const { command } = await this.parseBody(req);
+        const result = CommandExecutor.execute(command || '');
         this.sendJSON(res, 200, result);
     }
     
-    handleTerminalSessions(req, res) {
-        const sessions = db.get('terminal_sessions') || {};
-        this.sendJSON(res, 200, { sessions: Object.keys(sessions).length });
-    }
-    
-    handleExportProject(req, res) {
-        const files = db.get('files') || {};
+    handleExport(req, res) {
+        const files = this.db.get('files') || {};
         this.sendJSON(res, 200, { exportedAt: new Date().toISOString(), files });
     }
     
-    async handleImportProject(req, res) {
+    async handleImport(req, res) {
         const { files } = await this.parseBody(req);
-        if (files) db.set('files', files);
+        if (files) { this.db.set('files', files); this.cache.invalidate('files:'); }
         this.sendJSON(res, 200, { success: true });
     }
     
     async handleCreateProject(req, res) {
         const { name, template } = await this.parseBody(req);
         const templates = {
-            html: { 'index.html': '<!DOCTYPE html>\n<html>\n<head><title>' + name + '</title></head>\n<body><h1>Hello</h1></body>\n</html>' },
-            react: { 'index.html': '<!DOCTYPE html>\n<html>\n<head><title>' + name + '</title></head>\n<body><div id="root"></div></body>\n</html>' }
+            html: { 'index.html': '<!DOCTYPE html>\n<html><head><title>' + name + '</title></head><body><h1>Hello</h1></body></html>' },
+            react: { 'index.html': '<!DOCTYPE html>\n<html><head><title>' + name + '</title></head><body><div id="root"></div></body></html>' }
         };
-        db.set('files', templates[template] || templates.html);
+        this.db.set('files', templates[template] || templates.html);
+        this.cache.invalidate('files:');
         this.sendJSON(res, 200, { success: true, name, template });
     }
     
-    handleBuildStart(req, res) {
+    handleBackup(req, res) {
+        const files = this.db.get('files') || {};
+        const backup = { date: new Date().toISOString(), files };
+        const backupPath = path.join(CONFIG.backupDir, `backup-${Date.now()}.json`);
+        fs.writeFileSync(backupPath, JSON.stringify(backup, null, 2));
+        this.sendJSON(res, 200, { success: true, path: backupPath });
+    }
+    
+    async handleBuild(req, res) {
         const buildId = crypto.randomUUID();
+        Logger.info(`Build started: ${buildId}`);
         this.sendJSON(res, 200, { buildId, status: 'started' });
     }
     
-    handleBuildStatus(req, res) {
-        this.sendJSON(res, 200, { status: 'idle' });
-    }
-    
-    handleDbGetAll(req, res) {
-        const collection = req.params.collection;
-        const data = db.get(collection) || {};
-        this.sendJSON(res, 200, data);
-    }
-    
-    handleDbSet(req, res) {
-        const collection = req.params.collection;
-        db.set(collection, req.body);
+    handleDbWrite(req, res) {
+        this.db.set(req.params.collection, req.body);
         this.sendJSON(res, 200, { success: true });
     }
     
-    handleDbDelete(req, res) {
-        const collection = req.params.collection;
-        const key = req.params.key;
-        const data = db.get(collection) || {};
-        delete data[key];
-        db.set(collection, data);
-        this.sendJSON(res, 200, { success: true });
+    getTemplates() {
+        return [
+            { id: 'html5', name: 'HTML5 Starter', icon: '🌐', tags: ['html', 'starter'] },
+            { id: 'react', name: 'React App', icon: '⚛️', tags: ['react', 'spa'] },
+            { id: 'dashboard', name: 'Dashboard', icon: '📊', tags: ['dashboard'] },
+            { id: 'portfolio', name: 'Portfolio', icon: '🎨', tags: ['portfolio'] },
+            { id: 'landing', name: 'Landing Page', icon: '🚀', tags: ['landing'] },
+            { id: 'pwa', name: 'PWA Starter', icon: '📱', tags: ['pwa', 'mobile'] },
+        ];
     }
-}
-
-// ============================================
-// COMMAND EXECUTOR
-// ============================================
-function executeCommand(command) {
-    const parts = command.trim().split(/\s+/);
-    const cmd = parts[0]?.toLowerCase();
-    const args = parts.slice(1);
-    
-    const commands = {
-        help: () => ({ output: 'Available: help, ls, pwd, cat, echo, date, whoami, stats, clear' }),
-        ls: () => ({ output: 'index.html  styles.css  script.js  README.md' }),
-        pwd: () => ({ output: '/home/user' }),
-        cat: () => ({ output: args[0] ? `Content of ${args[0]}` : 'Usage: cat <file>' }),
-        echo: () => ({ output: args.join(' ') }),
-        date: () => ({ output: new Date().toString() }),
-        whoami: () => ({ output: 'developer' }),
-        stats: () => ({ output: `CPU: ${os.cpus().length} cores, Memory: ${(os.freemem()/1024/1024/1024).toFixed(1)}GB free` }),
-        clear: () => ({ output: '', type: 'clear' }),
-    };
-    
-    const handler = commands[cmd];
-    if (handler) return { ...handler(), command };
-    return { output: `Command not found: ${cmd}`, command, type: 'error' };
 }
 
 // ============================================
@@ -703,45 +733,50 @@ function executeCommand(command) {
 // ============================================
 class StaticServer {
     static MIME = {
-        '.html': 'text/html; charset=utf-8',
-        '.css': 'text/css; charset=utf-8',
-        '.js': 'application/javascript; charset=utf-8',
-        '.json': 'application/json; charset=utf-8',
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.svg': 'image/svg+xml',
-        '.ico': 'image/x-icon',
-        '.woff2': 'font/woff2',
-        '.txt': 'text/plain',
-        '.md': 'text/markdown',
-        '.xml': 'application/xml',
+        '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
+        '.js': 'application/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8',
+        '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
+        '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain',
+        '.md': 'text/markdown', '.xml': 'application/xml', '.pdf': 'application/pdf',
+        '.zip': 'application/zip', '.wasm': 'application/wasm',
     };
-
+    
     static serve(req, res, pathname) {
         let filePath = path.join(CONFIG.rootDir, pathname === '/' ? 'home.html' : pathname);
         
-        if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-            filePath = path.join(CONFIG.rootDir, 'home.html');
+        if (!fs.existsSync(filePath)) filePath = path.join(CONFIG.rootDir, 'home.html');
+        if (fs.statSync(filePath).isDirectory()) {
+            const indexFile = path.join(filePath, 'home.html');
+            filePath = fs.existsSync(indexFile) ? indexFile : path.join(filePath, 'index.html');
         }
-        
-        if (!fs.existsSync(filePath)) {
-            res.writeHead(404);
-            res.end('Not Found');
-            return true;
-        }
+        if (!fs.existsSync(filePath)) { res.writeHead(404); res.end('Not Found'); return true; }
         
         const ext = path.extname(filePath).toLowerCase();
         const mime = this.MIME[ext] || 'application/octet-stream';
         const stat = fs.statSync(filePath);
         
-        res.writeHead(200, {
-            'Content-Type': mime,
-            'Content-Length': stat.size,
-            'Cache-Control': 'public, max-age=3600',
-            'X-Powered-By': 'NexusCode/2.0',
-            'X-Content-Type-Options': 'nosniff',
-        });
+        // Handle range requests
+        const range = req.headers.range;
+        if (range && ['video/', 'audio/'].some(t => mime.startsWith(t))) {
+            const parts = range.replace(/bytes=/, '').split('-');
+            const start = parseInt(parts[0]);
+            const end = parts[1] ? parseInt(parts[1]) : stat.size - 1;
+            res.writeHead(206, { 'Content-Range': `bytes ${start}-${end}/${stat.size}`, 'Content-Length': end - start + 1, 'Content-Type': mime });
+            fs.createReadStream(filePath, { start, end }).pipe(res);
+            return true;
+        }
         
+        // Compress if applicable
+        const acceptEncoding = req.headers['accept-encoding'] || '';
+        if (CONFIG.compressionEnabled && stat.size > 1024) {
+            if (acceptEncoding.includes('gzip')) {
+                res.writeHead(200, { 'Content-Type': mime, 'Content-Encoding': 'gzip', 'Cache-Control': 'public, max-age=3600', 'X-Powered-By': 'NexusCode/3.0' });
+                fs.createReadStream(filePath).pipe(zlib.createGzip({ level: CONFIG.compressionLevel })).pipe(res);
+                return true;
+            }
+        }
+        
+        res.writeHead(200, { 'Content-Type': mime, 'Content-Length': stat.size, 'Cache-Control': 'public, max-age=3600', 'X-Powered-By': 'NexusCode/3.0' });
         fs.createReadStream(filePath).pipe(res);
         return true;
     }
@@ -757,38 +792,31 @@ class NexusCodeServer {
         this.rateLimiter = new RateLimiter();
         this.cache = new CacheSystem();
         this.db = new Database('nexuscode');
-        this.api = new APIRouter(this.auth, this.rateLimiter, this.cache, this.db);
+        this.ws = new WebSocketManager();
+        this.api = new APIRouter(this.auth, this.rateLimiter, this.cache, this.db, this.ws);
         this.server = null;
         this.startTime = Date.now();
     }
     
     async start() {
-        Logger.info('Starting NexusCode Production Server...');
-        Logger.info(`Environment: ${CONFIG.env}`);
-        Logger.info(`Port: ${CONFIG.port}`);
+        Logger.info('Starting NexusCode Production Server v3.0...');
+        Logger.info(`Environment: ${CONFIG.env} | Port: ${CONFIG.port} | Workers: ${CONFIG.workers}`);
         
         this.server = http.createServer((req, res) => {
             // CORS
-            if (CONFIG.enableCORS) {
-                res.setHeader('Access-Control-Allow-Origin', '*');
+            if (CONFIG.corsEnabled) {
+                res.setHeader('Access-Control-Allow-Origin', CONFIG.corsOrigin);
                 res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
                 res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
                 if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
             }
             
-            // Rate limiting
-            if (!this.rateLimiter.check(req.socket.remoteAddress)) {
-                res.writeHead(429, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Too many requests' }));
-                return;
-            }
-            
             const parsedUrl = url.parse(req.url);
             const pathname = parsedUrl.pathname;
             
-            // API routes
+            // API
             if (pathname.startsWith('/api/')) {
-                this.api.handle(req, res).then(handled => {
+                this.api.handle(req, res, pathname).then(handled => {
                     if (!handled) {
                         res.writeHead(404, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ error: 'API endpoint not found' }));
@@ -797,68 +825,57 @@ class NexusCodeServer {
                 return;
             }
             
-            // Static files
+            // Static
             if (!StaticServer.serve(req, res, pathname)) {
                 res.writeHead(404);
                 res.end('Not Found');
             }
         });
         
-        // WebSocket support
+        // WebSocket
         if (CONFIG.enableWebSocket) {
-            this.server.on('upgrade', (req, socket, head) => {
-                Logger.info('WebSocket upgrade requested');
-                // WebSocket handling here
-            });
+            this.server.on('upgrade', (req, socket, head) => this.ws.handleUpgrade(req, socket, head));
         }
         
-        this.server.listen(CONFIG.port, CONFIG.host, () => {
-            this.printBanner();
-        });
+        this.server.listen(CONFIG.port, CONFIG.host, () => this.printBanner());
         
         // Graceful shutdown
-        process.on('SIGTERM', () => this.shutdown());
-        process.on('SIGINT', () => this.shutdown());
+        ['SIGTERM', 'SIGINT'].forEach(sig => process.on(sig, () => this.shutdown()));
     }
     
     printBanner() {
         console.log('');
-        console.log('╔══════════════════════════════════════════════════╗');
-        console.log('║        🚀 NEXUSCODE PRODUCTION SERVER v2.0       ║');
-        console.log('╠══════════════════════════════════════════════════╣');
-        console.log(`║  🌐 http://${CONFIG.host}:${CONFIG.port}${' '.repeat(36 - CONFIG.port.toString().length)}║`);
-        console.log(`║  📁 Root: ${CONFIG.rootDir.substring(0, 35)}║`);
-        console.log(`║  🔧 Env: ${CONFIG.env}${' '.repeat(36 - CONFIG.env.length)}║`);
-        console.log(`║  🔐 Auth: ${CONFIG.enableAuth ? 'Enabled' : 'Disabled'}${' '.repeat(28 - (CONFIG.enableAuth ? 7 : 8))}║`);
-        console.log(`║  📊 Cache: ${CONFIG.cacheEnabled ? 'Enabled' : 'Disabled'}${' '.repeat(28 - (CONFIG.cacheEnabled ? 7 : 8))}║`);
-        console.log(`║  📝 Logs: ${CONFIG.logsDir.substring(0, 35)}║`);
-        console.log('╠══════════════════════════════════════════════════╣');
-        console.log('║  📡 API: /api/system/ping                        ║');
-        console.log('║  🔐 Auth: /api/auth/login                        ║');
-        console.log('║  📁 Files: /api/files                            ║');
-        console.log('║  ⬛ Terminal: /api/terminal/execute               ║');
-        console.log('║  📦 Build: /api/build/start                      ║');
-        console.log('╚══════════════════════════════════════════════════╝');
+        console.log('╔══════════════════════════════════════════════════════╗');
+        console.log('║        🚀 NEXUSCODE PRODUCTION SERVER v3.0           ║');
+        console.log('╠══════════════════════════════════════════════════════╣');
+        console.log(`║  🌐 http://${CONFIG.host}:${CONFIG.port}${' '.repeat(40 - CONFIG.port.toString().length)}║`);
+        console.log(`║  🔧 Env: ${CONFIG.env}${' '.repeat(40 - CONFIG.env.length)}║`);
+        console.log(`║  👷 Workers: ${CONFIG.workers}${' '.repeat(36 - CONFIG.workers.toString().length)}║`);
+        console.log(`║  🔐 Auth: ${CONFIG.enableAuth ? 'Enabled' : 'Disabled'}${' '.repeat(32 - (CONFIG.enableAuth ? 7 : 8))}║`);
+        console.log(`║  ⚡ Cache: ${CONFIG.cacheEnabled ? 'Enabled' : 'Disabled'}${' '.repeat(32 - (CONFIG.cacheEnabled ? 7 : 8))}║`);
+        console.log(`║  📡 WebSocket: ${CONFIG.enableWebSocket ? 'Enabled' : 'Disabled'}${' '.repeat(28 - (CONFIG.enableWebSocket ? 7 : 8))}║`);
+        console.log(`║  📦 Compression: ${CONFIG.compressionEnabled ? 'Enabled' : 'Disabled'}${' '.repeat(26 - (CONFIG.compressionEnabled ? 7 : 8))}║`);
+        console.log('╠══════════════════════════════════════════════════════╣');
+        console.log('║  📡 API Endpoints:                                   ║');
+        console.log('║    GET  /api/system/ping                             ║');
+        console.log('║    POST /api/auth/login                              ║');
+        console.log('║    GET  /api/files                                   ║');
+        console.log('║    POST /api/files/read                              ║');
+        console.log('║    POST /api/files/write                             ║');
+        console.log('║    POST /api/terminal/execute                        ║');
+        console.log('║    GET  /api/templates                               ║');
+        console.log('║    GET  /api/system/metrics                          ║');
+        console.log('╚══════════════════════════════════════════════════════╝');
         console.log('');
-        Logger.info(`Server ready - listening on port ${CONFIG.port}`);
+        Logger.info(`Server ready on port ${CONFIG.port}`);
     }
     
     shutdown() {
         Logger.info('Shutting down gracefully...');
-        this.db.save();
-        this.server.close(() => {
-            Logger.info('Server stopped');
-            process.exit(0);
-        });
+        this.server.close(() => { Logger.info('Server stopped'); process.exit(0); });
         setTimeout(() => process.exit(1), 5000);
     }
 }
-
-// ============================================
-// GLOBAL INSTANCES
-// ============================================
-const cache = new CacheSystem();
-const db = new Database('nexuscode');
 
 // ============================================
 // START
@@ -866,4 +883,4 @@ const db = new Database('nexuscode');
 const server = new NexusCodeServer();
 server.start();
 
-module.exports = { server, CONFIG, Logger, AuthSystem, RateLimiter, CacheSystem, Database, APIRouter };
+module.exports = { server, CONFIG, Logger, AuthSystem, RateLimiter, CacheSystem, Database, WebSocketManager, APIRouter, StaticServer };

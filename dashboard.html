@@ -5,17 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0d1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Dashboard - NexusCode</title>
     <link rel="stylesheet" href="css/unified.css">
 </head>
 <body>
+    <!-- ============ MAIN CONTAINER ============ -->
     <div class="container">
+        
+        <!-- ============ PAGE HEADER ============ -->
         <header class="page-header">
             <a href="home.html" class="back-btn">🏠 Home</a>
             <h1 class="page-title">📊 Dashboard</h1>
-            <span class="badge badge-success" style="margin-left:auto;">v2.0</span>
+            <span class="badge badge-success" style="margin-left:auto;">● Online</span>
         </header>
 
+        <!-- ============ STATISTICS GRID ============ -->
         <div class="grid grid-4">
             <div class="stat fade-in">
                 <div class="stat-value" id="stat-files">3</div>
@@ -30,19 +35,77 @@
                 <div class="stat-label">Total Size</div>
             </div>
             <div class="stat fade-in" style="animation-delay:0.3s;">
-                <div class="stat-value" id="stat-errors" style="color:var(--green);">0</div>
+                <div class="stat-value" style="color:var(--green);">0</div>
                 <div class="stat-label">Errors</div>
             </div>
         </div>
 
+        <!-- ============ RECENT ACTIVITY ============ -->
         <div class="card fade-in" style="animation-delay:0.15s;">
-            <div class="card-header">🕒 Recent Activity</div>
-            <div class="list-item">📄 <span>Edited index.html</span><span style="margin-left:auto;font-size:10px;color:var(--text-dim);">2 minutes ago</span></div>
-            <div class="list-item">💾 <span>Saved styles.css</span><span style="margin-left:auto;font-size:10px;color:var(--text-dim);">15 minutes ago</span></div>
-            <div class="list-item">🚀 <span>Project opened</span><span style="margin-left:auto;font-size:10px;color:var(--text-dim);">1 hour ago</span></div>
-            <div class="list-item">📋 <span>Template applied</span><span style="margin-left:auto;font-size:10px;color:var(--text-dim);">3 hours ago</span></div>
+            <div class="card-header">
+                <span>🕒 Recent Activity</span>
+                <span class="badge badge-primary">Last 24h</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">📄</span>
+                <span>Edited <strong>index.html</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">2 min ago</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">💾</span>
+                <span>Saved <strong>styles.css</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">15 min ago</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">🚀</span>
+                <span>Project <strong>opened</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">1 hour ago</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">📋</span>
+                <span>Template <strong>applied</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">3 hours ago</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">🔧</span>
+                <span>Settings <strong>updated</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">5 hours ago</span>
+            </div>
         </div>
 
+        <!-- ============ PERFORMANCE ============ -->
+        <div class="card fade-in" style="animation-delay:0.2s;">
+            <div class="card-header">⚡ Performance</div>
+            <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;">Memory Usage</span>
+                    <span style="font-size:11px;color:var(--accent);">45%</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:45%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.5s;"></div>
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;">Storage Used</span>
+                    <span style="font-size:11px;color:var(--green);">23%</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:23%;height:100%;background:var(--green);border-radius:3px;transition:width 0.5s;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;">CPU Load</span>
+                    <span style="font-size:11px;color:var(--orange);">12%</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:12%;height:100%;background:var(--orange);border-radius:3px;transition:width 0.5s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ QUICK ACTIONS ============ -->
         <div class="card fade-in" style="animation-delay:0.25s;">
             <div class="card-header">⚡ Quick Actions</div>
             <div class="grid grid-3">
@@ -54,8 +117,26 @@
                 <a href="search.html" class="btn">🔍 Search</a>
             </div>
         </div>
+
+        <!-- ============ PROJECT INFO ============ -->
+        <div class="card fade-in" style="animation-delay:0.3s;">
+            <div class="card-header">📦 Project Info</div>
+            <div class="grid grid-2" style="font-size:12px;">
+                <div>
+                    <span style="color:var(--text-dim);">Name:</span> NexusCode Studio<br>
+                    <span style="color:var(--text-dim);">Version:</span> 2.0.0<br>
+                    <span style="color:var(--text-dim);">Branch:</span> <span style="color:var(--green);">main</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-dim);">Files:</span> 3<br>
+                    <span style="color:var(--text-dim);">Commits:</span> 12<br>
+                    <span style="color:var(--text-dim);">Remote:</span> <span style="color:var(--accent);">origin</span>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- ============ BOTTOM NAVIGATION ============ -->
     <nav class="bottom-nav">
         <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
         <a href="dashboard.html" class="nav-item active"><span class="nav-icon">📊</span>Dashboard</a>
@@ -64,16 +145,27 @@
         <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
 
+    <!-- ============ SCRIPTS ============ -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             try {
                 const files = JSON.parse(localStorage.getItem('nexuscode_files') || '[]');
                 if (files.length) {
+                    const totalLines = files.reduce((s, f) => s + (f.content || '').split('\n').length, 0);
+                    const totalSize = files.reduce((s, f) => s + (f.content || '').length, 0);
                     document.getElementById('stat-files').textContent = files.length;
-                    document.getElementById('stat-lines').textContent = files.reduce((s, f) => s + (f.content || '').split('\n').length, 0);
-                    document.getElementById('stat-size').textContent = (files.reduce((s, f) => s + (f.content || '').length, 0) / 1024).toFixed(1) + 'K';
+                    document.getElementById('stat-lines').textContent = totalLines;
+                    document.getElementById('stat-size').textContent = totalSize > 1024 ? (totalSize / 1024).toFixed(1) + 'K' : totalSize + 'B';
                 }
             } catch(e) {}
+        });
+
+        // Keyboard shortcut: D for Dashboard
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                window.location.href = 'dashboard.html';
+            }
         });
     </script>
 </body>

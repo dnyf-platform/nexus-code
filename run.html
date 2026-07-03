@@ -5,54 +5,162 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0d1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Run & Preview - NexusCode</title>
     <link rel="stylesheet" href="css/unified.css">
     <style>
-        .device-frame {
-            border: 3px solid var(--border); border-radius: 24px; overflow: hidden;
-            background: #fff; margin: 0 auto; transition: all 0.3s;
+        /* Device Frame */
+        .preview-area {
+            display: flex; align-items: center; justify-content: center;
+            padding: var(--space-lg) 0; min-height: 400px;
         }
-        .device-frame.mobile { width: 375px; height: 667px; }
-        .device-frame.tablet { width: 768px; height: 900px; }
-        .device-frame.desktop { width: 100%; height: 500px; border-radius: 8px; }
+        .device-frame {
+            border: 4px solid var(--border); border-radius: 28px; overflow: hidden;
+            background: #fff; transition: all 0.3s ease; position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .device-frame.mobile { width: 390px; height: 700px; }
+        .device-frame.tablet { width: 768px; height: 850px; }
+        .device-frame.desktop { width: 100%; height: 550px; border-radius: 12px; border-width: 2px; }
+        .device-notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 30px; background: #111; border-radius: 0 0 18px 18px;
+            z-index: 10; display: none;
+        }
+        .device-frame.mobile .device-notch { display: block; }
         .device-frame iframe { width: 100%; height: 100%; border: none; }
-        .device-tabs { display: flex; gap: 6px; margin-bottom: var(--space-md); }
+        
+        /* Device Tabs */
+        .device-tabs { display: flex; gap: 8px; margin-bottom: var(--space-md); flex-wrap: wrap; }
         .device-tab {
-            padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+            padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim); cursor: pointer;
+            font-size: 13px; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+        }
+        .device-tab:hover { border-color: var(--accent); color: var(--text); }
+        .device-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        
+        /* Console */
+        .console-area {
+            background: #0a0a0f; border: 1px solid var(--border); border-radius: var(--radius);
+            margin-top: var(--space-md); overflow: hidden;
+        }
+        .console-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 14px; background: var(--bg-card); border-bottom: 1px solid var(--border);
+            font-size: 12px; font-weight: 600;
+        }
+        .console-output {
+            height: 180px; overflow-y: auto; padding: 10px;
+            font-family: var(--font-mono); font-size: 12px; line-height: 1.6;
+        }
+        .console-entry { padding: 2px 0; display: flex; gap: 10px; }
+        .console-time { color: var(--text-dim); font-size: 10px; flex-shrink: 0; width: 50px; }
+        .console-log { color: var(--text); }
+        .console-error { color: var(--red); }
+        .console-warn { color: var(--orange); }
+        .console-info { color: var(--accent); }
+        .console-success { color: var(--green); }
+        
+        /* Source Tabs */
+        .source-tabs { display: flex; gap: 4px; margin-bottom: var(--space-md); flex-wrap: wrap; }
+        .source-tab {
+            padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
             background: var(--bg-card); color: var(--text-dim); cursor: pointer;
             font-size: 12px; transition: all 0.15s;
         }
-        .device-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        @media (max-width:600px) { .device-frame.mobile { width: 100%; height: 500px; } }
+        .source-tab:hover { border-color: var(--accent); color: var(--text); }
+        .source-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        
+        /* Status bar */
+        .status-bar {
+            display: flex; align-items: center; gap: 12px; padding: 8px 14px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            margin-bottom: var(--space-md); font-size: 12px;
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .status-dot.running { background: var(--green); animation: pulse 1.5s infinite; }
+        .status-dot.stopped { background: var(--text-dim); }
+        .status-dot.error { background: var(--red); }
+        
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        
+        @media (max-width:600px) {
+            .device-frame.mobile { width: 100%; height: 500px; }
+            .device-frame.tablet { width: 100%; height: 400px; }
+            .console-output { height: 140px; }
+        }
     </style>
 </head>
 <body>
+    <!-- ============ MAIN CONTAINER ============ -->
     <div class="container">
+        
+        <!-- ============ PAGE HEADER ============ -->
         <header class="page-header">
             <a href="home.html" class="back-btn">🏠 Home</a>
             <a href="index.html" class="back-btn">← Editor</a>
             <h1 class="page-title">▶ Run & Preview</h1>
-            <span class="badge badge-success" id="run-status" style="margin-left:auto;">Ready</span>
+            <span class="badge badge-success" id="run-badge" style="margin-left:auto;">● Ready</span>
         </header>
 
+        <!-- ============ DEVICE SELECTOR ============ -->
         <div class="device-tabs">
             <button class="device-tab active" onclick="setDevice('mobile', this)">📱 Pixel 7</button>
-            <button class="device-tab" onclick="setDevice('tablet', this)">📱 Tablet</button>
+            <button class="device-tab" onclick="setDevice('tablet', this)">📱 Pixel Tablet</button>
             <button class="device-tab" onclick="setDevice('desktop', this)">💻 Desktop</button>
         </div>
 
-        <div class="device-frame mobile" id="device-frame">
-            <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+        <!-- ============ SOURCE TABS ============ -->
+        <div class="source-tabs">
+            <button class="source-tab active" data-source="index.html">🌐 index.html</button>
+            <button class="source-tab" data-source="styles.css">🎨 styles.css</button>
+            <button class="source-tab" data-source="script.js">📜 script.js</button>
+            <button class="source-tab" data-source="combined">📦 Combined</button>
         </div>
 
-        <div style="display:flex;gap:8px;margin-top:var(--space-md);">
+        <!-- ============ STATUS BAR ============ -->
+        <div class="status-bar">
+            <span class="status-dot running" id="status-dot"></span>
+            <span id="status-text">App running</span>
+            <span style="margin-left:auto;color:var(--text-dim);" id="status-time">Just now</span>
+        </div>
+
+        <!-- ============ PREVIEW AREA ============ -->
+        <div class="preview-area">
+            <div class="device-frame mobile" id="device-frame">
+                <div class="device-notch"></div>
+                <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
+            </div>
+        </div>
+
+        <!-- ============ CONTROLS ============ -->
+        <div style="display:flex;gap:8px;margin-top:var(--space-md);flex-wrap:wrap;">
             <button class="btn btn-success" onclick="runPreview()">▶ Run</button>
             <button class="btn btn-danger btn-sm" onclick="stopPreview()">⏹ Stop</button>
             <button class="btn btn-sm" onclick="refreshPreview()">🔄 Refresh</button>
+            <button class="btn btn-sm" onclick="openInNewTab()">🔗 Open in Tab</button>
+            <button class="btn btn-sm" onclick="clearConsole()">🗑 Clear Console</button>
+            <button class="btn btn-sm" onclick="toggleConsole()">📋 Toggle Console</button>
             <a href="index.html" class="btn btn-primary" style="margin-left:auto;">✏️ Edit Code</a>
+        </div>
+
+        <!-- ============ CONSOLE ============ -->
+        <div class="console-area" id="console-area">
+            <div class="console-header">
+                <span>📋 Console Output</span>
+                <span style="font-size:10px;color:var(--text-dim);" id="console-count">0 entries</span>
+            </div>
+            <div class="console-output" id="console-output">
+                <div class="console-entry">
+                    <span class="console-time">--:--</span>
+                    <span class="console-info">▶ Preview ready. Click Run to start.</span>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- ============ BOTTOM NAVIGATION ============ -->
     <nav class="bottom-nav">
         <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
         <a href="index.html" class="nav-item"><span class="nav-icon">✏️</span>Editor</a>
@@ -61,62 +169,203 @@
         <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
 
+    <!-- ============ TOAST ============ -->
     <div class="toast" id="toast"></div>
 
+    <!-- ============ SCRIPTS ============ -->
     <script>
-        let isRunning = false;
+        // ===== STATE =====
+        const state = {
+            device: 'mobile',
+            isRunning: false,
+            consoleEntries: [],
+            currentSource: 'combined',
+            sources: {
+                'index.html': '',
+                'styles.css': '',
+                'script.js': ''
+            }
+        };
 
-        function getPreviewContent() {
-            const files = JSON.parse(localStorage.getItem('nexuscode_files') || '[]');
-            const htmlFile = files.find(f => f.name === 'index.html' || f.name?.endsWith('.html'));
-            const cssFile = files.find(f => f.name === 'styles.css' || f.name?.endsWith('.css'));
-            const jsFile = files.find(f => f.name === 'script.js' || f.name?.endsWith('.js'));
+        // ===== INIT =====
+        function init() {
+            loadSourcesFromStorage();
+            updateSourceTabs();
+            addConsole('info', '▶ Preview ready. Click Run to start.');
+            runPreview(); // Auto-run
+        }
 
-            let html = htmlFile?.content || '<!DOCTYPE html>\n<html>\n<head><title>Preview</title></head>\n<body>\n<h1>Hello NexusCode!</h1>\n<p>Start editing to see changes</p>\n</body>\n</html>';
-            
-            if (cssFile) html = html.replace('</head>', `<style>${cssFile.content}</style></head>`);
-            if (jsFile) html = html.replace('</body>', `<script>${jsFile.content}</script></body>`);
-            
-            return html;
+        // ===== SOURCES =====
+        function loadSourcesFromStorage() {
+            try {
+                const files = JSON.parse(localStorage.getItem('nexuscode_files') || '[]');
+                const html = files.find(f => f.name === 'index.html' || f.name?.endsWith('.html'));
+                const css = files.find(f => f.name === 'styles.css' || f.name?.endsWith('.css'));
+                const js = files.find(f => f.name === 'script.js' || f.name?.endsWith('.js'));
+
+                state.sources['index.html'] = html?.content || getDefaultHTML();
+                state.sources['styles.css'] = css?.content || getDefaultCSS();
+                state.sources['script.js'] = js?.content || getDefaultJS();
+            } catch(e) {
+                state.sources['index.html'] = getDefaultHTML();
+                state.sources['styles.css'] = getDefaultCSS();
+                state.sources['script.js'] = getDefaultJS();
+            }
+        }
+
+        function getDefaultHTML() {
+            return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>My App</title>\n    <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n    <div class="container">\n        <h1>🚀 Hello NexusCode!</h1>\n        <p>Your app is running</p>\n        <button onclick="handleClick()">Click Me</button>\n        <div id="output"></div>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>';
+        }
+
+        function getDefaultCSS() {
+            return '* { margin:0; padding:0; box-sizing:border-box; }\nbody {\n    font-family: "Inter", system-ui, sans-serif;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 100vh;\n    background: linear-gradient(135deg, #667eea, #764ba2);\n    color: white;\n}\n.container { text-align:center; padding:40px; }\nh1 { font-size:2.5em; margin-bottom:16px; }\np { font-size:1.2em; opacity:0.9; margin-bottom:24px; }\nbutton {\n    padding:14px 32px; background:white; color:#667eea;\n    border:none; border-radius:30px; font-size:16px; font-weight:600;\n    cursor:pointer; transition:transform 0.2s;\n}\nbutton:hover { transform:scale(1.05); }\n#output { margin-top:20px; padding:16px; background:rgba(255,255,255,0.15); border-radius:12px; }';
+        }
+
+        function getDefaultJS() {
+            return 'console.log("App started!");\nconsole.log("Device: " + navigator.userAgent);\n\nlet clickCount = 0;\n\nfunction handleClick() {\n    clickCount++;\n    const output = document.getElementById("output");\n    output.innerHTML = "Clicked <strong>" + clickCount + "</strong> time" + (clickCount > 1 ? "s" : "") + "! 🎉";\n    console.log("Button clicked: " + clickCount);\n}';
+        }
+
+        function updateSourceTabs() {
+            document.querySelectorAll('.source-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    state.currentSource = this.dataset.source;
+                    if (state.isRunning) runPreview();
+                });
+            });
+        }
+
+        // ===== BUILD & RUN =====
+        function buildPreview() {
+            if (state.currentSource === 'combined') {
+                let html = state.sources['index.html'] || getDefaultHTML();
+                const css = state.sources['styles.css'];
+                const js = state.sources['script.js'];
+
+                if (css) html = html.replace('</head>', `<style>\n${css}\n</style></head>`);
+                if (js) {
+                    const wrappedJS = `<script>\n// Console capture for parent\n(function(){\n    var _log=console.log,_err=console.error,_warn=console.warn;\n    console.log=function(){_log.apply(console,arguments);window.parent.postMessage({type:'log',level:'info',msg:Array.from(arguments).join(' ')},'*');};\n    console.error=function(){_err.apply(console,arguments);window.parent.postMessage({type:'log',level:'error',msg:Array.from(arguments).join(' ')},'*');};\n    console.warn=function(){_warn.apply(console,arguments);window.parent.postMessage({type:'log',level:'warn',msg:Array.from(arguments).join(' ')},'*');};\n    window.onerror=function(m,s,l){window.parent.postMessage({type:'log',level:'error',msg:'Line '+l+': '+m},'*');};\n})();\n${js}\n</script>`;
+                    html = html.replace('</body>', wrappedJS + '</body>');
+                }
+                return html;
+            } else {
+                return state.sources[state.currentSource] || '';
+            }
         }
 
         function runPreview() {
-            isRunning = true;
-            document.getElementById('run-status').textContent = '🟢 Running';
-            document.getElementById('run-status').className = 'badge badge-success';
-            const html = getPreviewContent();
+            state.isRunning = true;
+            updateStatus('running', '● Running', 'running');
+            
+            const html = buildPreview();
             const frame = document.getElementById('preview-frame');
             const blob = new Blob([html], { type: 'text/html' });
             frame.src = URL.createObjectURL(blob);
-            showToast('▶ Preview running');
+            
+            addConsole('success', '▶ App running on ' + getDeviceName());
+            document.getElementById('run-badge').className = 'badge badge-success';
+            document.getElementById('run-badge').textContent = '● Running';
         }
 
         function stopPreview() {
-            isRunning = false;
-            document.getElementById('run-status').textContent = '⚪ Stopped';
-            document.getElementById('run-status').className = 'badge badge-warning';
+            state.isRunning = false;
+            updateStatus('stopped', '○ Stopped', 'stopped');
             document.getElementById('preview-frame').src = 'about:blank';
-            showToast('⏹ Preview stopped');
+            document.getElementById('run-badge').className = 'badge badge-warning';
+            document.getElementById('run-badge').textContent = '○ Stopped';
+            addConsole('warn', '⏹ App stopped');
         }
 
         function refreshPreview() {
-            if (isRunning) runPreview();
+            if (state.isRunning) {
+                addConsole('info', '🔄 Refreshing...');
+                runPreview();
+            }
         }
 
+        function openInNewTab() {
+            const html = buildPreview();
+            const blob = new Blob([html], { type: 'text/html' });
+            window.open(URL.createObjectURL(blob), '_blank');
+            addConsole('info', '🔗 Opened in new tab');
+        }
+
+        // ===== DEVICE =====
         function setDevice(device, btn) {
+            state.device = device;
             document.querySelectorAll('.device-tab').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             document.getElementById('device-frame').className = 'device-frame ' + device;
-            if (isRunning) runPreview();
+            if (state.isRunning) runPreview();
+            addConsole('info', '📱 Device: ' + getDeviceName());
         }
 
+        function getDeviceName() {
+            return state.device === 'mobile' ? 'Pixel 7' : state.device === 'tablet' ? 'Pixel Tablet' : 'Desktop';
+        }
+
+        // ===== STATUS =====
+        function updateStatus(dotClass, text, type) {
+            document.getElementById('status-dot').className = 'status-dot ' + type;
+            document.getElementById('status-text').textContent = text;
+            document.getElementById('status-time').textContent = new Date().toLocaleTimeString();
+        }
+
+        // ===== CONSOLE =====
+        function addConsole(level, message) {
+            const time = new Date().toLocaleTimeString();
+            state.consoleEntries.push({ time, level, message });
+            if (state.consoleEntries.length > 200) state.consoleEntries.shift();
+            renderConsole();
+        }
+
+        function renderConsole() {
+            const output = document.getElementById('console-output');
+            output.innerHTML = state.consoleEntries.map(e => `
+                <div class="console-entry">
+                    <span class="console-time">${e.time}</span>
+                    <span class="console-${e.level}">${e.message}</span>
+                </div>
+            `).join('');
+            output.scrollTop = output.scrollHeight;
+            document.getElementById('console-count').textContent = state.consoleEntries.length + ' entries';
+        }
+
+        function clearConsole() {
+            state.consoleEntries = [];
+            renderConsole();
+            addConsole('info', '🗑 Console cleared');
+        }
+
+        function toggleConsole() {
+            const area = document.getElementById('console-area');
+            area.style.display = area.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // ===== MESSAGE LISTENER =====
+        window.addEventListener('message', function(e) {
+            if (e.data?.type === 'log') {
+                addConsole(e.data.level || 'info', e.data.msg);
+            }
+        });
+
+        // ===== TOAST =====
         function showToast(msg) {
             const el = document.getElementById('toast');
             el.textContent = msg; el.classList.add('show');
             setTimeout(() => el.classList.remove('show'), 2000);
         }
 
-        runPreview();
+        // ===== KEYBOARD =====
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F5') { e.preventDefault(); refreshPreview(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') { e.preventDefault(); runPreview(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault(); window.location.href = 'run.html'; }
+        });
+
+        // ===== START =====
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>

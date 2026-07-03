@@ -2,77 +2,141 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1e1e1e">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Dashboard - NexusCode</title>
-    <link rel="stylesheet" href="css/themes/dark-theme.css">
-    <link rel="stylesheet" href="css/themes/light-theme.css">
-    <link rel="stylesheet" href="css/themes/high-contrast.css">
-    <link rel="stylesheet" href="css/layout-engine.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
-        .page { max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
-        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary, #969696); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
-        .back-btn:hover { color: var(--text-primary); background: var(--bg-hover, #2a2d2e); }
-        .page-title { font-size: 24px; font-weight: 700; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 12px; padding: 20px; text-align: center; }
-        .stat-value { font-size: 36px; font-weight: 700; color: var(--accent-primary, #007acc); }
-        .stat-label { font-size: 12px; color: var(--text-secondary, #969696); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .section { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .section h3 { font-size: 16px; margin-bottom: 12px; }
-        .activity-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color, #3e3e42); font-size: 13px; }
-        .activity-time { color: var(--text-muted, #6a6a6a); font-size: 11px; }
-        .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
-        .action-btn { padding: 12px; background: var(--bg-tertiary, #2d2d30); border: 1px solid var(--border-color, #3e3e42); border-radius: 8px; color: var(--text-primary); cursor: pointer; font-size: 13px; text-align: center; transition: all 0.15s; }
-        .action-btn:hover { background: var(--accent-primary, #007acc); color: white; border-color: var(--accent-primary); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary, #252526); border-top: 1px solid var(--border-color, #3e3e42); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary, #969696); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
-        .nav-item.active { color: var(--accent-primary, #007acc); }
-        .nav-icon { font-size: 20px; }
-    </style>
+    <link rel="stylesheet" href="css/unified.css">
 </head>
 <body>
-    <div class="page">
-        <div class="topbar">
-            <a href="home.html" class="back-btn">← Back</a>
+    <!-- ============ MAIN CONTAINER ============ -->
+    <div class="container">
+        
+        <!-- ============ PAGE HEADER ============ -->
+        <header class="page-header">
+            <a href="home.html" class="back-btn">🏠 Home</a>
             <h1 class="page-title">📊 Dashboard</h1>
-        </div>
+            <span class="badge badge-success" style="margin-left:auto;">● Online</span>
+        </header>
 
-        <div class="stats-grid">
-            <div class="stat-card"><div class="stat-value" id="stat-files">3</div><div class="stat-label">Files</div></div>
-            <div class="stat-card"><div class="stat-value" id="stat-lines">45</div><div class="stat-label">Lines of Code</div></div>
-            <div class="stat-card"><div class="stat-value" id="stat-size">2.4K</div><div class="stat-label">Total Size</div></div>
-            <div class="stat-card"><div class="stat-value" id="stat-errors">0</div><div class="stat-label">Errors</div></div>
-        </div>
-
-        <div class="section">
-            <h3>🕒 Recent Activity</h3>
-            <div id="activity-list">
-                <div class="activity-item"><span>📄 Edited index.html</span><span class="activity-time">2 min ago</span></div>
-                <div class="activity-item"><span>💾 Saved styles.css</span><span class="activity-time">15 min ago</span></div>
-                <div class="activity-item"><span>🚀 Project opened</span><span class="activity-time">1 hour ago</span></div>
-                <div class="activity-item"><span>📋 Template applied</span><span class="activity-time">3 hours ago</span></div>
+        <!-- ============ STATISTICS GRID ============ -->
+        <div class="grid grid-4">
+            <div class="stat fade-in">
+                <div class="stat-value" id="stat-files">3</div>
+                <div class="stat-label">Project Files</div>
+            </div>
+            <div class="stat fade-in" style="animation-delay:0.1s;">
+                <div class="stat-value" id="stat-lines">45</div>
+                <div class="stat-label">Lines of Code</div>
+            </div>
+            <div class="stat fade-in" style="animation-delay:0.2s;">
+                <div class="stat-value" id="stat-size">2.4K</div>
+                <div class="stat-label">Total Size</div>
+            </div>
+            <div class="stat fade-in" style="animation-delay:0.3s;">
+                <div class="stat-value" style="color:var(--green);">0</div>
+                <div class="stat-label">Errors</div>
             </div>
         </div>
 
-        <div class="section">
-            <h3>⚡ Quick Actions</h3>
-            <div class="action-grid">
-                <button class="action-btn" onclick="location.href='index.html'">✏️ Open Editor</button>
-                <button class="action-btn" onclick="location.href='terminal/terminal.html'">⬛ Terminal</button>
-                <button class="action-btn" onclick="location.href='templates.html'">📋 Templates</button>
-                <button class="action-btn" onclick="location.href='settings.html'">⚙ Settings</button>
-                <button class="action-btn" onclick="location.href='plugins.html'">🧩 Plugins</button>
-                <button class="action-btn" onclick="location.href='search.html'">🔍 Search</button>
+        <!-- ============ RECENT ACTIVITY ============ -->
+        <div class="card fade-in" style="animation-delay:0.15s;">
+            <div class="card-header">
+                <span>🕒 Recent Activity</span>
+                <span class="badge badge-primary">Last 24h</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">📄</span>
+                <span>Edited <strong>index.html</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">2 min ago</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">💾</span>
+                <span>Saved <strong>styles.css</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">15 min ago</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">🚀</span>
+                <span>Project <strong>opened</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">1 hour ago</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">📋</span>
+                <span>Template <strong>applied</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">3 hours ago</span>
+            </div>
+            <div class="list-item">
+                <span style="font-size:16px;">🔧</span>
+                <span>Settings <strong>updated</strong></span>
+                <span style="margin-left:auto;font-size:10px;color:var(--text-dim);">5 hours ago</span>
+            </div>
+        </div>
+
+        <!-- ============ PERFORMANCE ============ -->
+        <div class="card fade-in" style="animation-delay:0.2s;">
+            <div class="card-header">⚡ Performance</div>
+            <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;">Memory Usage</span>
+                    <span style="font-size:11px;color:var(--accent);">45%</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:45%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.5s;"></div>
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;">Storage Used</span>
+                    <span style="font-size:11px;color:var(--green);">23%</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:23%;height:100%;background:var(--green);border-radius:3px;transition:width 0.5s;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;">CPU Load</span>
+                    <span style="font-size:11px;color:var(--orange);">12%</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:12%;height:100%;background:var(--orange);border-radius:3px;transition:width 0.5s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ QUICK ACTIONS ============ -->
+        <div class="card fade-in" style="animation-delay:0.25s;">
+            <div class="card-header">⚡ Quick Actions</div>
+            <div class="grid grid-3">
+                <a href="index.html" class="btn">✏️ Open Editor</a>
+                <a href="terminal/terminal.html" class="btn">⬛ Terminal</a>
+                <a href="run.html" class="btn">▶ Run Preview</a>
+                <a href="templates.html" class="btn">📋 Templates</a>
+                <a href="settings.html" class="btn">⚙ Settings</a>
+                <a href="search.html" class="btn">🔍 Search</a>
+            </div>
+        </div>
+
+        <!-- ============ PROJECT INFO ============ -->
+        <div class="card fade-in" style="animation-delay:0.3s;">
+            <div class="card-header">📦 Project Info</div>
+            <div class="grid grid-2" style="font-size:12px;">
+                <div>
+                    <span style="color:var(--text-dim);">Name:</span> NexusCode Studio<br>
+                    <span style="color:var(--text-dim);">Version:</span> 2.0.0<br>
+                    <span style="color:var(--text-dim);">Branch:</span> <span style="color:var(--green);">main</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-dim);">Files:</span> 3<br>
+                    <span style="color:var(--text-dim);">Commits:</span> 12<br>
+                    <span style="color:var(--text-dim);">Remote:</span> <span style="color:var(--accent);">origin</span>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- ============ BOTTOM NAVIGATION ============ -->
     <nav class="bottom-nav">
         <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
         <a href="dashboard.html" class="nav-item active"><span class="nav-icon">📊</span>Dashboard</a>
@@ -81,12 +145,27 @@
         <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
 
+    <!-- ============ SCRIPTS ============ -->
     <script>
-        document.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                this.style.transform = 'scale(0.95)';
-                setTimeout(() => this.style.transform = '', 150);
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const files = JSON.parse(localStorage.getItem('nexuscode_files') || '[]');
+                if (files.length) {
+                    const totalLines = files.reduce((s, f) => s + (f.content || '').split('\n').length, 0);
+                    const totalSize = files.reduce((s, f) => s + (f.content || '').length, 0);
+                    document.getElementById('stat-files').textContent = files.length;
+                    document.getElementById('stat-lines').textContent = totalLines;
+                    document.getElementById('stat-size').textContent = totalSize > 1024 ? (totalSize / 1024).toFixed(1) + 'K' : totalSize + 'B';
+                }
+            } catch(e) {}
+        });
+
+        // Keyboard shortcut: D for Dashboard
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                window.location.href = 'dashboard.html';
+            }
         });
     </script>
 </body>

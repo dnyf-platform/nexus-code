@@ -2,54 +2,132 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1e1e1e">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Templates - NexusCode</title>
-    <link rel="stylesheet" href="css/themes/dark-theme.css">
-    <link rel="stylesheet" href="css/templates.css">
+    <link rel="stylesheet" href="css/unified.css">
     <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
-        .page { max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
-        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
-        .back-btn:hover { color: var(--text-primary); }
-        .page-title { font-size: 24px; font-weight: 700; }
-        .search-box { width: 100%; padding: 12px 16px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; color: var(--text-primary); font-size: 14px; outline: none; margin-bottom: 20px; }
-        .search-box:focus { border-color: var(--accent-primary, #007acc); }
-        .templates-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-        .template-card { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
-        .template-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); border-color: var(--accent-primary); }
-        .template-preview { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 48px; }
-        .template-info { padding: 14px; }
+        .template-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; cursor: pointer;
+            transition: all 0.25s ease; position: relative;
+        }
+        .template-card:hover {
+            border-color: var(--accent); transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+        }
+        .template-preview {
+            height: 120px; display: flex; align-items: center; justify-content: center;
+            font-size: 52px; position: relative; overflow: hidden;
+        }
+        .template-preview::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+            height: 40px; background: linear-gradient(transparent, var(--bg-card));
+        }
+        .template-badge {
+            position: absolute; top: 10px; right: 10px; z-index: 2;
+        }
+        .template-info { padding: var(--space-md); }
         .template-info h4 { font-size: 15px; margin-bottom: 4px; }
-        .template-info p { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
-        .template-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-        .tag { padding: 3px 8px; background: var(--bg-tertiary, #2d2d30); border: 1px solid var(--border-color); border-radius: 10px; font-size: 10px; color: var(--text-secondary); }
-        .template-actions { padding: 10px 14px; border-top: 1px solid var(--border-color); display: flex; gap: 8px; }
-        .btn-use { flex: 1; padding: 8px; background: var(--accent-primary, #007acc); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .btn-preview { flex: 1; padding: 8px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
-        .nav-item.active { color: var(--accent-primary); }
-        .nav-icon { font-size: 20px; }
+        .template-info p { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 10px; }
+        .template-meta {
+            display: flex; gap: 8px; font-size: 11px; color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+        .template-meta span { display: flex; align-items: center; gap: 4px; }
+        .template-actions {
+            padding: var(--space-sm) var(--space-md); border-top: 1px solid var(--border);
+            display: flex; gap: 8px;
+        }
+        .template-actions .btn { flex: 1; justify-content: center; }
+        
+        /* Category Filters */
+        .category-filters {
+            display: flex; gap: 6px; margin-bottom: var(--space-md); flex-wrap: wrap;
+        }
+        .category-chip {
+            padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim); cursor: pointer;
+            font-size: 12px; transition: all 0.15s; white-space: nowrap;
+        }
+        .category-chip:hover { border-color: var(--accent); color: var(--text); }
+        .category-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        
+        /* Preview Modal */
+        .preview-modal-content {
+            background: #fff; border-radius: 8px; padding: 20px; color: #333;
+            font-size: 14px; line-height: 1.6; white-space: pre-wrap;
+            max-height: 60vh; overflow-y: auto; font-family: var(--font-mono); font-size: 12px;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+        }
+        .empty-state .icon { font-size: 64px; display: block; margin-bottom: 16px; }
+        .empty-state h3 { margin-bottom: 8px; }
+        .empty-state p { color: var(--text-dim); }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="topbar">
-            <a href="home.html" class="back-btn">← Back</a>
+    <!-- ============ MAIN CONTAINER ============ -->
+    <div class="container">
+        
+        <!-- ============ PAGE HEADER ============ -->
+        <header class="page-header">
+            <a href="home.html" class="back-btn">🏠 Home</a>
             <h1 class="page-title">📋 Templates</h1>
+            <span class="badge badge-primary" style="margin-left:auto;" id="template-count">12 templates</span>
+        </header>
+
+        <!-- ============ SEARCH ============ -->
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="search-templates" placeholder="Search by name, tag, or category...">
         </div>
 
-        <input type="text" class="search-box" id="search-templates" placeholder="🔍 Search templates...">
+        <!-- ============ CATEGORY FILTERS ============ -->
+        <div class="category-filters">
+            <button class="category-chip active" data-category="all">📋 All</button>
+            <button class="category-chip" data-category="web">🌐 Web</button>
+            <button class="category-chip" data-category="framework">⚛ Framework</button>
+            <button class="category-chip" data-category="design">🎨 Design</button>
+            <button class="category-chip" data-category="mobile">📱 Mobile</button>
+            <button class="category-chip" data-category="backend">⚙ Backend</button>
+        </div>
 
-        <div class="templates-grid" id="templates-grid">
-            <!-- Generated by JS -->
+        <!-- ============ TEMPLATES GRID ============ -->
+        <div class="grid grid-3" id="templates-grid"></div>
+
+        <!-- ============ EMPTY STATE (hidden by default) ============ -->
+        <div class="empty-state" id="empty-state" style="display:none;">
+            <span class="icon">🔍</span>
+            <h3>No templates found</h3>
+            <p>Try a different search term or category</p>
+            <button class="btn btn-sm" onclick="resetFilters()" style="margin-top:12px;">Reset Filters</button>
         </div>
     </div>
 
+    <!-- ============ PREVIEW MODAL ============ -->
+    <div class="modal-overlay" id="preview-modal">
+        <div class="modal" style="max-width:700px;">
+            <div class="modal-header">
+                <span id="preview-title">Template Preview</span>
+                <button class="btn btn-sm" onclick="closePreview()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-modal-content" id="preview-content"></div>
+                <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                    <button class="btn btn-sm" onclick="closePreview()">Close</button>
+                    <button class="btn btn-primary btn-sm" id="preview-use-btn">✓ Use This Template</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ BOTTOM NAVIGATION ============ -->
     <nav class="bottom-nav">
         <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
         <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
@@ -58,58 +136,265 @@
         <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
 
+    <!-- ============ TOAST ============ -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ============ SCRIPTS ============ -->
     <script>
+        // ===== TEMPLATE DATA =====
         const templates = [
-            { id: 'html5', name: 'HTML5 Starter', icon: '🌐', desc: 'Clean HTML5 boilerplate with responsive meta tags', tags: ['html', 'starter'], color: '#ff6b35' },
-            { id: 'react', name: 'React App', icon: '⚛️', desc: 'Simple React application setup with components', tags: ['react', 'spa', 'javascript'], color: '#61dafb' },
-            { id: 'vue', name: 'Vue SPA', icon: '💚', desc: 'Vue.js single page application template', tags: ['vue', 'spa'], color: '#42b883' },
-            { id: 'dashboard', name: 'Admin Dashboard', icon: '📊', desc: 'Responsive admin panel with sidebar and cards', tags: ['dashboard', 'admin'], color: '#764ba2' },
-            { id: 'portfolio', name: 'Portfolio', icon: '🎨', desc: 'Personal portfolio with project showcase', tags: ['portfolio', 'personal'], color: '#667eea' },
-            { id: 'landing', name: 'Landing Page', icon: '🚀', desc: 'Product landing page with CTA sections', tags: ['landing', 'marketing'], color: '#e94560' },
-            { id: 'blog', name: 'Blog Template', icon: '📝', desc: 'Clean blog layout with article cards', tags: ['blog', 'content'], color: '#f093fb' },
-            { id: 'api-docs', name: 'API Documentation', icon: '📚', desc: 'Beautiful API documentation page', tags: ['docs', 'api'], color: '#4facfe' },
-            { id: 'pwa', name: 'PWA Starter', icon: '📱', desc: 'Progressive Web App with service worker', tags: ['pwa', 'mobile'], color: '#43e97b' },
+            {
+                id: 'html5', name: 'HTML5 Starter', icon: '🌐', category: 'web',
+                desc: 'Clean HTML5 boilerplate with responsive meta tags, CSS variables, and modern best practices.',
+                tags: ['html', 'css', 'starter', 'responsive'],
+                color: '#ff6b35', files: 3, downloads: '2.4k',
+                content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>My Website</title>\n    <style>\n        :root { --primary: #007acc; --bg: #f5f5f5; }\n        body { font-family: system-ui, sans-serif; margin: 0; background: var(--bg); }\n        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }\n        h1 { color: var(--primary); }\n    </style>\n</head>\n<body>\n    <div class="container">\n        <h1>🚀 Hello World!</h1>\n        <p>Start building your amazing website.</p>\n    </div>\n</body>\n</html>'
+            },
+            {
+                id: 'react', name: 'React App', icon: '⚛️', category: 'framework',
+                desc: 'Modern React single-page application with hooks, components, and hot reload setup.',
+                tags: ['react', 'javascript', 'spa', 'components'],
+                color: '#61dafb', files: 5, downloads: '5.1k',
+                content: '// React App Structure\n// src/App.js\nimport React, { useState } from "react";\n\nfunction App() {\n    const [count, setCount] = useState(0);\n    \n    return (\n        <div className="app">\n            <h1>Hello React! ⚛️</h1>\n            <p>Count: {count}</p>\n            <button onClick={() => setCount(count + 1)}>Increment</button>\n        </div>\n    );\n}\n\nexport default App;'
+            },
+            {
+                id: 'vue', name: 'Vue SPA', icon: '💚', category: 'framework',
+                desc: 'Vue.js single page application with Vue Router and component system.',
+                tags: ['vue', 'javascript', 'spa', 'router'],
+                color: '#42b883', files: 4, downloads: '3.2k',
+                content: '// Vue App\n<template>\n  <div id="app">\n    <h1>{{ message }}</h1>\n    <button @click="count++">Clicked {{ count }} times</button>\n  </div>\n</template>\n\n<script>\nexport default {\n  data() {\n    return { message: "Hello Vue! 💚", count: 0 }\n  }\n}\n</script>'
+            },
+            {
+                id: 'dashboard', name: 'Admin Dashboard', icon: '📊', category: 'design',
+                desc: 'Responsive admin dashboard with sidebar navigation, stats cards, and data tables.',
+                tags: ['dashboard', 'admin', 'layout', 'charts'],
+                color: '#764ba2', files: 8, downloads: '8.7k',
+                content: '<!-- Dashboard Layout -->\n<div class="dashboard">\n  <aside class="sidebar">\n    <nav>\n      <a href="#">📊 Dashboard</a>\n      <a href="#">📁 Files</a>\n      <a href="#">👥 Users</a>\n      <a href="#">⚙ Settings</a>\n    </nav>\n  </aside>\n  <main class="content">\n    <div class="stats">\n      <div class="card">Users: 1,234</div>\n      <div class="card">Revenue: $5,678</div>\n      <div class="card">Orders: 890</div>\n    </div>\n  </main>\n</div>'
+            },
+            {
+                id: 'portfolio', name: 'Portfolio Site', icon: '🎨', category: 'design',
+                desc: 'Personal portfolio with hero section, project cards, skills, and contact form.',
+                tags: ['portfolio', 'personal', 'showcase', 'contact'],
+                color: '#667eea', files: 3, downloads: '6.3k',
+                content: '<!-- Portfolio -->\n<section class="hero">\n  <h1>John Doe</h1>\n  <p>Full Stack Developer</p>\n</section>\n\n<section class="projects">\n  <div class="project-card">\n    <h3>Project Alpha</h3>\n    <p>A revolutionary web application</p>\n  </div>\n</section>'
+            },
+            {
+                id: 'landing', name: 'Landing Page', icon: '🚀', category: 'web',
+                desc: 'High-conversion product landing page with hero, features, pricing, and CTA.',
+                tags: ['landing', 'marketing', 'product', 'cta'],
+                color: '#e94560', files: 2, downloads: '9.1k',
+                content: '<!-- Landing Page -->\n<header class="hero">\n  <h1>Launch Your Product</h1>\n  <p>The best way to showcase your idea</p>\n  <button class="cta">Get Started Free</button>\n</header>\n\n<section class="features">\n  <div>⚡ Fast</div>\n  <div>🔒 Secure</div>\n  <div>📈 Scalable</div>\n</section>'
+            },
+            {
+                id: 'blog', name: 'Blog Template', icon: '📝', category: 'web',
+                desc: 'Clean blog layout with article cards, categories, tags, and comment section.',
+                tags: ['blog', 'content', 'writing', 'seo'],
+                color: '#f093fb', files: 4, downloads: '4.5k',
+                content: '<!-- Blog -->\n<article class="post">\n  <h1>My First Blog Post</h1>\n  <div class="meta">Published on July 3, 2026 • 5 min read</div>\n  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>\n</article>'
+            },
+            {
+                id: 'pwa', name: 'PWA Starter', icon: '📱', category: 'mobile',
+                desc: 'Progressive Web App with service worker, manifest, and offline support.',
+                tags: ['pwa', 'mobile', 'offline', 'service-worker'],
+                color: '#43e97b', files: 5, downloads: '3.8k',
+                content: '// PWA Configuration\n// manifest.json\n{\n  "name": "My PWA App",\n  "short_name": "App",\n  "start_url": "/",\n  "display": "standalone",\n  "theme_color": "#007acc",\n  "background_color": "#ffffff"\n}\n\n// sw.js - Service Worker\nself.addEventListener("install", e => {\n  e.waitUntil(caches.open("v1").then(c => c.addAll(["/"])));\n});'
+            },
+            {
+                id: 'api-docs', name: 'API Documentation', icon: '📚', category: 'backend',
+                desc: 'Beautiful API documentation page with endpoints, parameters, and code examples.',
+                tags: ['docs', 'api', 'reference', 'rest'],
+                color: '#4facfe', files: 2, downloads: '2.9k',
+                content: '# API Documentation\n\n## GET /api/users\nReturns a list of users.\n\n**Response:**\n```json\n{\n  "users": [\n    { "id": 1, "name": "John" }\n  ]\n}\n```\n\n## POST /api/users\nCreate a new user.\n\n**Request Body:**\n```json\n{\n  "name": "John",\n  "email": "john@example.com"\n}\n```'
+            },
+            {
+                id: 'ecommerce', name: 'E-Commerce Store', icon: '🛒', category: 'web',
+                desc: 'Online store with product grid, cart, checkout flow, and payment integration.',
+                tags: ['ecommerce', 'shop', 'products', 'cart'],
+                color: '#ff9800', files: 10, downloads: '7.2k',
+                content: '<!-- E-Commerce -->\n<div class="products">\n  <div class="product-card">\n    <img src="product.jpg" alt="Product">\n    <h3>Product Name</h3>\n    <p class="price">$29.99</p>\n    <button>Add to Cart 🛒</button>\n  </div>\n</div>'
+            },
+            {
+                id: 'chat', name: 'Chat Application', icon: '💬', category: 'mobile',
+                desc: 'Real-time chat interface with message bubbles, online status, and typing indicators.',
+                tags: ['chat', 'messaging', 'real-time', 'websocket'],
+                color: '#25d366', files: 6, downloads: '4.1k',
+                content: '<!-- Chat UI -->\n<div class="chat">\n  <div class="message received">\n    <div class="bubble">Hey! How are you?</div>\n    <span class="time">10:30 AM</span>\n  </div>\n  <div class="message sent">\n    <div class="bubble">I\'m good, thanks!</div>\n    <span class="time">10:31 AM</span>\n  </div>\n</div>'
+            },
+            {
+                id: 'auth', name: 'Authentication UI', icon: '🔐', category: 'backend',
+                desc: 'Login, register, forgot password pages with form validation and error handling.',
+                tags: ['auth', 'login', 'register', 'security'],
+                color: '#546e7a', files: 4, downloads: '5.6k',
+                content: '<!-- Login Form -->\n<form class="auth-form">\n  <h2>Welcome Back</h2>\n  <input type="email" placeholder="Email" required>\n  <input type="password" placeholder="Password" required>\n  <button type="submit">Sign In</button>\n  <a href="#">Forgot password?</a>\n  <p>Don\'t have an account? <a href="#">Sign up</a></p>\n</form>'
+            }
         ];
 
-        function renderTemplates(filter = '') {
-            const grid = document.getElementById('templates-grid');
-            const filtered = filter ? templates.filter(t => 
-                t.name.toLowerCase().includes(filter) || t.tags.some(tag => tag.includes(filter))
-            ) : templates;
+        // ===== STATE =====
+        let currentCategory = 'all';
+        let currentPreviewId = null;
 
-            grid.innerHTML = filtered.map(t => `
-                <div class="template-card">
-                    <div class="template-preview" style="background:${t.color}22;">${t.icon}</div>
+        // ===== RENDER =====
+        function render(filter = '') {
+            let filtered = templates;
+            
+            // Apply category filter
+            if (currentCategory !== 'all') {
+                filtered = filtered.filter(t => t.category === currentCategory);
+            }
+            
+            // Apply search filter
+            if (filter) {
+                const q = filter.toLowerCase();
+                filtered = filtered.filter(t => 
+                    t.name.toLowerCase().includes(q) || 
+                    t.tags.some(tag => tag.includes(q)) ||
+                    t.category.includes(q)
+                );
+            }
+
+            // Update count
+            document.getElementById('template-count').textContent = filtered.length + ' template' + (filtered.length !== 1 ? 's' : '');
+
+            // Show/hide empty state
+            const grid = document.getElementById('templates-grid');
+            const empty = document.getElementById('empty-state');
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            
+            empty.style.display = 'none';
+
+            // Render cards
+            grid.innerHTML = filtered.map((t, i) => `
+                <div class="template-card fade-in" style="animation-delay:${i * 0.04}s;">
+                    <div class="template-preview" style="background:linear-gradient(135deg, ${t.color}22, ${t.color}08);">
+                        ${t.icon}
+                        <span class="badge ${getPopularityBadge(t.downloads)} template-badge">${t.downloads}</span>
+                    </div>
                     <div class="template-info">
                         <h4>${t.name}</h4>
                         <p>${t.desc}</p>
-                        <div class="template-tags">${t.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>
+                        <div class="template-meta">
+                            <span>📁 ${t.files} files</span>
+                            <span>⬇ ${t.downloads}</span>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                            ${t.tags.map(tg => `<span class="tag">${tg}</span>`).join('')}
+                        </div>
                     </div>
                     <div class="template-actions">
-                        <button class="btn-preview" onclick="previewTemplate('${t.id}')">👁 Preview</button>
-                        <button class="btn-use" onclick="useTemplate('${t.id}')">✓ Use</button>
+                        <button class="btn btn-sm" onclick="previewTemplate('${t.id}')">👁 Preview</button>
+                        <button class="btn btn-primary btn-sm" onclick="useTemplate('${t.id}')">✓ Use</button>
                     </div>
                 </div>
             `).join('');
         }
 
+        function getPopularityBadge(downloads) {
+            const num = parseFloat(downloads);
+            if (num >= 8) return 'badge-success';
+            if (num >= 5) return 'badge-primary';
+            return 'badge-warning';
+        }
+
+        // ===== ACTIONS =====
         function useTemplate(id) {
-            const template = templates.find(t => t.id === id);
-            if (confirm(`Apply "${template.name}" template? This will open the editor.`)) {
-                localStorage.setItem('nexuscode_active_template', id);
-                window.location.href = 'index.html';
+            const t = templates.find(tp => tp.id === id);
+            if (!t) return;
+            
+            // Save template files to localStorage
+            const files = [
+                { name: 'index.html', content: t.content, type: 'html' }
+            ];
+            
+            // Add CSS and JS files for templates that have them
+            if (['html5', 'landing', 'portfolio', 'blog', 'dashboard'].includes(id)) {
+                files.push({ name: 'styles.css', content: getDefaultCSS(), type: 'css' });
             }
+            if (['react', 'vue', 'pwa'].includes(id)) {
+                files.push({ name: 'script.js', content: getDefaultJS(), type: 'js' });
+            }
+            
+            localStorage.setItem('nexuscode_files', JSON.stringify(files));
+            localStorage.setItem('nexuscode_active_template', id);
+            
+            showToast('✅ Template "' + t.name + '" applied! Opening editor...');
+            setTimeout(() => window.location.href = 'index.html', 600);
         }
 
         function previewTemplate(id) {
-            alert('Preview feature: Opens template preview\n\nTemplate ID: ' + id);
+            const t = templates.find(tp => tp.id === id);
+            if (!t) return;
+            
+            currentPreviewId = id;
+            document.getElementById('preview-title').textContent = '👁 ' + t.name;
+            document.getElementById('preview-content').textContent = t.content.substring(0, 2000);
+            document.getElementById('preview-use-btn').onclick = () => {
+                closePreview();
+                useTemplate(id);
+            };
+            document.getElementById('preview-modal').classList.add('show');
         }
 
-        document.getElementById('search-templates').addEventListener('input', function() {
-            renderTemplates(this.value.toLowerCase());
+        function closePreview() {
+            document.getElementById('preview-modal').classList.remove('show');
+            currentPreviewId = null;
+        }
+
+        // ===== FILTERS =====
+        document.querySelectorAll('.category-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                currentCategory = this.dataset.category;
+                const searchVal = document.getElementById('search-templates').value;
+                render(searchVal.toLowerCase());
+            });
         });
 
-        renderTemplates();
+        document.getElementById('search-templates').addEventListener('input', function() {
+            render(this.value.toLowerCase());
+        });
+
+        function resetFilters() {
+            currentCategory = 'all';
+            document.getElementById('search-templates').value = '';
+            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-category="all"]').classList.add('active');
+            render();
+        }
+
+        // ===== MODAL CLOSE =====
+        document.getElementById('preview-modal').addEventListener('click', function(e) {
+            if (e.target === this) closePreview();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePreview();
+        });
+
+        // ===== DEFAULTS =====
+        function getDefaultCSS() {
+            return '/* Main Styles */\n* { margin: 0; padding: 0; box-sizing: border-box; }\nbody { font-family: system-ui, sans-serif; line-height: 1.6; }\n.container { max-width: 1200px; margin: 0 auto; padding: 20px; }';
+        }
+
+        function getDefaultJS() {
+            return '// Main Script\nconsole.log("App initialized");\ndocument.addEventListener("DOMContentLoaded", () => {\n    console.log("DOM ready");\n});';
+        }
+
+        // ===== TOAST =====
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg; el.classList.add('show');
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        // ===== INIT =====
+        render();
     </script>
 </body>
 </html>

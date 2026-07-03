@@ -2,83 +2,360 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1e1e1e">
-    <title>Git - NexusCode</title>
-    <link rel="stylesheet" href="css/themes/dark-theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Git Manager - NexusCode</title>
+    <link rel="stylesheet" href="css/unified.css">
     <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
-        .page { max-width: 700px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
-        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
-        .back-btn:hover { color: var(--text-primary); }
-        .page-title { font-size: 24px; font-weight: 700; }
-        .branch-bar { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .branch-icon { color: #f85149; }
-        .section { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
-        .section h4 { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .file-change { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border-color); }
-        .change-added { color: #3fb950; }
-        .change-modified { color: #d2991d; }
-        .change-deleted { color: #f85149; }
-        .action-btns { display: flex; gap: 8px; margin-top: 12px; }
-        .action-btns button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
-        .btn-commit { background: #3fb950; color: white; }
-        .btn-push { background: var(--accent-primary, #007acc); color: white; }
-        .btn-pull { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
-        .commit-item { padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
-        .commit-hash { color: var(--accent-primary); font-family: monospace; font-size: 12px; }
-        .commit-date { color: var(--text-muted); font-size: 11px; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
-        .nav-item.active { color: var(--accent-primary); }
-        .nav-icon { font-size: 20px; }
+        /* Branch Bar */
+        .branch-bar {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 14px 18px; margin-bottom: var(--space-md);
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .branch-icon { font-size: 22px; color: var(--orange); }
+        .branch-name { font-weight: 700; font-size: 16px; color: var(--accent); font-family: var(--font-mono); }
+        .branch-status { font-size: 11px; color: var(--text-dim); }
+        .branch-actions { display: flex; gap: 6px; margin-left: auto; }
+        
+        /* Tabs */
+        .git-tabs { display: flex; gap: 4px; margin-bottom: var(--space-md); border-bottom: 1px solid var(--border); }
+        .git-tab {
+            padding: 10px 18px; background: none; border: none; border-bottom: 2px solid transparent;
+            color: var(--text-dim); cursor: pointer; font-size: 13px; transition: all 0.15s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .git-tab:hover { color: var(--text); }
+        .git-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .git-tab .count { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--bg-hover); }
+        
+        /* Panels */
+        .git-panel { display: none; }
+        .git-panel.active { display: block; }
+        
+        /* File Changes */
+        .change-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+            border-radius: 6px; cursor: pointer; transition: all 0.15s; font-size: 13px;
+        }
+        .change-item:hover { background: var(--bg-hover); }
+        .change-indicator {
+            width: 20px; height: 20px; border-radius: 4px; display: flex;
+            align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0;
+        }
+        .change-added { background: #3fb95022; color: var(--green); }
+        .change-modified { background: #d2991d22; color: var(--orange); }
+        .change-deleted { background: #f8514922; color: var(--red); }
+        .change-untracked { background: #58a6ff22; color: var(--accent); }
+        .change-renamed { background: #a371f722; color: var(--purple); }
+        .file-path { flex: 1; font-family: var(--font-mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* Commit History */
+        .commit-item {
+            padding: 12px 0; border-bottom: 1px solid var(--border);
+            display: flex; gap: 12px; align-items: flex-start;
+        }
+        .commit-item:last-child { border-bottom: none; }
+        .commit-graph {
+            width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 10px;
+            background: var(--bg-hover); color: var(--text-dim); margin-top: 2px;
+        }
+        .commit-info { flex: 1; }
+        .commit-hash { font-family: var(--font-mono); font-size: 12px; color: var(--accent); cursor: pointer; }
+        .commit-hash:hover { text-decoration: underline; }
+        .commit-message { font-size: 14px; margin: 3px 0; }
+        .commit-meta { font-size: 11px; color: var(--text-dim); display: flex; gap: 12px; flex-wrap: wrap; }
+        .commit-meta span { display: flex; align-items: center; gap: 4px; }
+        
+        /* Branches */
+        .branch-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            border-radius: 8px; cursor: pointer; transition: all 0.15s;
+        }
+        .branch-item:hover { background: var(--bg-hover); }
+        .branch-item.current { background: var(--bg-hover); border: 1px solid var(--accent); }
+        .branch-item .branch-indicator {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .branch-item .branch-indicator.current { background: var(--green); }
+        .branch-item .branch-indicator.other { background: var(--text-dim); }
+        
+        /* Remote */
+        .remote-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px;
+        }
+        .remote-url {
+            font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+            word-break: break-all;
+        }
+        
+        /* Commit Area */
+        .commit-area {
+            display: flex; gap: 8px; margin-top: 12px;
+        }
+        .commit-input {
+            flex: 1; padding: 10px 14px; background: var(--bg-hover);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            color: var(--text); font-size: 13px; outline: none; font-family: var(--font-sans);
+        }
+        .commit-input:focus { border-color: var(--accent); }
+        
+        /* Stash */
+        .stash-item {
+            padding: 12px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); margin-bottom: 8px;
+        }
+        
+        /* Stats row */
+        .git-stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px; margin-bottom: var(--space-md);
+        }
+        .git-stat { text-align: center; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+        .git-stat .value { font-size: 22px; font-weight: 700; }
+        .git-stat .label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
+        
+        @media (max-width:600px) {
+            .branch-actions { width: 100%; margin-top: 8px; }
+            .commit-area { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="topbar">
-            <a href="home.html" class="back-btn">← Back</a>
+    <!-- ============ MAIN CONTAINER ============ -->
+    <div class="container">
+        
+        <!-- ============ PAGE HEADER ============ -->
+        <header class="page-header">
+            <a href="home.html" class="back-btn">🏠 Home</a>
+            <a href="index.html" class="back-btn">← Editor</a>
             <h1 class="page-title">⎇ Git Manager</h1>
-        </div>
+            <button class="btn btn-sm" style="margin-left:auto;" onclick="fetchAll()">↓ Fetch</button>
+        </header>
 
+        <!-- ============ BRANCH BAR ============ -->
         <div class="branch-bar">
             <span class="branch-icon">⎇</span>
-            <strong>main</strong>
-            <span style="color:var(--text-muted);font-size:12px;">• 12 commits • up to date with origin/main</span>
-        </div>
-
-        <div class="section">
-            <h4>📝 Changes (3 files)</h4>
-            <div class="file-change"><span class="change-added">A</span> index.html</div>
-            <div class="file-change"><span class="change-modified">M</span> styles.css</div>
-            <div class="file-change"><span class="change-added">A</span> script.js</div>
-            <div class="action-btns">
-                <button class="btn-commit" onclick="alert('Changes committed!')">✓ Commit</button>
-                <button class="btn-push" onclick="alert('Pushing to remote...')">↑ Push</button>
-                <button class="btn-pull" onclick="alert('Pulling from remote...')">↓ Pull</button>
+            <span class="branch-name" id="current-branch">main</span>
+            <span class="branch-status" id="branch-status">• 3 ahead of origin/main</span>
+            <div class="branch-actions">
+                <button class="btn btn-sm" onclick="openModal('branch-modal')">🔀 Switch</button>
+                <button class="btn btn-sm" onclick="openModal('new-branch-modal')">+ Branch</button>
             </div>
         </div>
 
-        <div class="section">
-            <h4>📜 Recent Commits</h4>
-            <div class="commit-item">
-                <div><span class="commit-hash">abc1234</span> Update styles and layout</div>
-                <div class="commit-date">2 hours ago • Developer</div>
+        <!-- ============ STATS ============ -->
+        <div class="git-stats">
+            <div class="git-stat"><div class="value" style="color:var(--green);" id="stat-commits">12</div><div class="label">Commits</div></div>
+            <div class="git-stat"><div class="value" style="color:var(--accent);" id="stat-branches">4</div><div class="label">Branches</div></div>
+            <div class="git-stat"><div class="value" style="color:var(--orange);" id="stat-changes">3</div><div class="label">Changes</div></div>
+            <div class="git-stat"><div class="value" style="color:var(--purple);" id="stat-stashes">1</div><div class="label">Stashes</div></div>
+        </div>
+
+        <!-- ============ TABS ============ -->
+        <div class="git-tabs">
+            <button class="git-tab active" data-panel="changes">📝 Changes <span class="count">3</span></button>
+            <button class="git-tab" data-panel="history">📜 History <span class="count">12</span></button>
+            <button class="git-tab" data-panel="branches">🔀 Branches <span class="count">4</span></button>
+            <button class="git-tab" data-panel="remote">☁ Remote</button>
+            <button class="git-tab" data-panel="stash">📦 Stash <span class="count">1</span></button>
+        </div>
+
+        <!-- ============ CHANGES PANEL ============ -->
+        <div class="git-panel active card" id="panel-changes" style="padding:0;">
+            <div style="padding:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span style="font-weight:600;font-size:13px;">Staged Changes</span>
+                    <span class="badge badge-success" id="staged-count">2</span>
+                </div>
+                <div id="staged-files">
+                    <div class="change-item">
+                        <span class="change-indicator change-modified">M</span>
+                        <span class="file-path">app/src/main/MainActivity.java</span>
+                        <button class="btn btn-sm" onclick="unstageFile('MainActivity.java')">Unstage</button>
+                    </div>
+                    <div class="change-item">
+                        <span class="change-indicator change-added">A</span>
+                        <span class="file-path">app/src/res/layout/main.xml</span>
+                        <button class="btn btn-sm" onclick="unstageFile('main.xml')">Unstage</button>
+                    </div>
+                </div>
+                
+                <hr class="divider">
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span style="font-weight:600;font-size:13px;">Unstaged Changes</span>
+                    <span class="badge badge-warning" id="unstaged-count">1</span>
+                </div>
+                <div id="unstaged-files">
+                    <div class="change-item">
+                        <span class="change-indicator change-untracked">?</span>
+                        <span class="file-path">README.md</span>
+                        <button class="btn btn-sm" onclick="stageFile('README.md')">Stage</button>
+                    </div>
+                </div>
             </div>
-            <div class="commit-item">
-                <div><span class="commit-hash">def5678</span> Add JavaScript functionality</div>
-                <div class="commit-date">5 hours ago • Developer</div>
+            
+            <!-- Commit Area -->
+            <div style="padding:14px;border-top:1px solid var(--border);background:var(--bg-hover);">
+                <div class="commit-area">
+                    <input type="text" class="commit-input" id="commit-message" placeholder="Commit message... (Ctrl+Enter to commit)" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))commit()">
+                    <button class="btn btn-success" onclick="commit()">✓ Commit</button>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:8px;">
+                    <button class="btn btn-sm" onclick="stageAll()">📦 Stage All</button>
+                    <button class="btn btn-sm" onclick="unstageAll()">↩ Unstage All</button>
+                    <button class="btn btn-sm" onclick="discardChanges()">🗑 Discard</button>
+                </div>
             </div>
-            <div class="commit-item">
-                <div><span class="commit-hash">ghi9012</span> Initial project setup</div>
-                <div class="commit-date">1 day ago • Developer</div>
+        </div>
+
+        <!-- ============ HISTORY PANEL ============ -->
+        <div class="git-panel card" id="panel-history">
+            <div id="commit-list">
+                <div class="commit-item">
+                    <div class="commit-graph">●</div>
+                    <div class="commit-info">
+                        <span class="commit-hash">abc1234</span>
+                        <div class="commit-message">✨ Add new dashboard widgets with performance metrics</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 2 hours ago</span><span>⎇ main</span></div>
+                    </div>
+                </div>
+                <div class="commit-item">
+                    <div class="commit-graph">●</div>
+                    <div class="commit-info">
+                        <span class="commit-hash">def5678</span>
+                        <div class="commit-message">🐛 Fix terminal input focus issue on mobile</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 5 hours ago</span><span>⎇ main</span></div>
+                    </div>
+                </div>
+                <div class="commit-item">
+                    <div class="commit-graph">●</div>
+                    <div class="commit-info">
+                        <span class="commit-hash">ghi9012</span>
+                        <div class="commit-message">📄 Update documentation and add README examples</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 1 day ago</span><span>⎇ main</span></div>
+                    </div>
+                </div>
+                <div class="commit-item">
+                    <div class="commit-graph">◉</div>
+                    <div class="commit-info">
+                        <span class="commit-hash">jkl3456</span>
+                        <div class="commit-message">🔧 Add production server with authentication and caching</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 2 days ago</span><span>⎇ main</span></div>
+                    </div>
+                </div>
+                <div class="commit-item">
+                    <div class="commit-graph">◉</div>
+                    <div class="commit-info">
+                        <span class="commit-hash">mno7890</span>
+                        <div class="commit-message">🎉 Initial commit: NexusCode Studio IDE v2.0</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 3 days ago</span><span>⎇ main</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ BRANCHES PANEL ============ -->
+        <div class="git-panel card" id="panel-branches">
+            <div id="branch-list">
+                <div class="branch-item current">
+                    <span class="branch-indicator current"></span>
+                    <span style="flex:1;font-weight:600;color:var(--green);">main</span>
+                    <span class="badge badge-success">Current</span>
+                </div>
+                <div class="branch-item" onclick="switchBranch('develop')">
+                    <span class="branch-indicator other"></span>
+                    <span style="flex:1;">develop</span>
+                    <button class="btn btn-sm">Switch</button>
+                </div>
+                <div class="branch-item" onclick="switchBranch('feature/new-ui')">
+                    <span class="branch-indicator other"></span>
+                    <span style="flex:1;">feature/new-ui</span>
+                    <button class="btn btn-sm">Switch</button>
+                </div>
+                <div class="branch-item" onclick="switchBranch('bugfix/login-fix')">
+                    <span class="branch-indicator other"></span>
+                    <span style="flex:1;">bugfix/login-fix</span>
+                    <button class="btn btn-sm">Switch</button>
+                </div>
+            </div>
+            <button class="btn btn-sm" style="width:100%;margin-top:10px;" onclick="openModal('new-branch-modal')">+ Create New Branch</button>
+        </div>
+
+        <!-- ============ REMOTE PANEL ============ -->
+        <div class="git-panel card" id="panel-remote">
+            <div class="remote-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <strong>origin</strong>
+                    <span style="font-size:11px;color:var(--green);">✓ Connected</span>
+                </div>
+                <div class="remote-url">https://github.com/dnyf-platform/nexus-code.git</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn btn-primary" onclick="pushToRemote()">↑ Push</button>
+                <button class="btn btn-sm" onclick="pullFromRemote()">↓ Pull</button>
+                <button class="btn btn-sm" onclick="fetchAll()">↓ Fetch</button>
+                <button class="btn btn-sm" onclick="forcePush()" style="color:var(--red);">⚠ Force Push</button>
+            </div>
+        </div>
+
+        <!-- ============ STASH PANEL ============ -->
+        <div class="git-panel card" id="panel-stash">
+            <div id="stash-list">
+                <div class="stash-item">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong>WIP: Dashboard improvements</strong>
+                        <span style="font-size:10px;color:var(--text-dim);">1 hour ago</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">⎇ main • 3 files changed</div>
+                    <div style="display:flex;gap:6px;margin-top:8px;">
+                        <button class="btn btn-sm" onclick="stashApply(0)">Apply</button>
+                        <button class="btn btn-sm" onclick="stashPop(0)">Pop</button>
+                        <button class="btn btn-sm" style="color:var(--red);" onclick="stashDrop(0)">Drop</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-sm" style="width:100%;margin-top:10px;" onclick="stashSave()">📦 Stash Current Changes</button>
+        </div>
+    </div>
+
+    <!-- ============ SWITCH BRANCH MODAL ============ -->
+    <div class="modal-overlay" id="branch-modal">
+        <div class="modal">
+            <div class="modal-header">🔀 Switch Branch <button class="btn btn-sm" onclick="closeModal('branch-modal')">×</button></div>
+            <div class="modal-body">
+                <input type="text" class="input" placeholder="Search branches..." id="branch-search" oninput="filterBranches()" style="margin-bottom:12px;">
+                <div id="branch-search-results"></div>
             </div>
         </div>
     </div>
 
+    <!-- ============ NEW BRANCH MODAL ============ -->
+    <div class="modal-overlay" id="new-branch-modal">
+        <div class="modal">
+            <div class="modal-header">+ New Branch <button class="btn btn-sm" onclick="closeModal('new-branch-modal')">×</button></div>
+            <div class="modal-body">
+                <label style="font-size:12px;color:var(--text-dim);">Branch Name</label>
+                <input type="text" class="input" placeholder="feature/my-feature" id="new-branch-name" style="margin-bottom:12px;">
+                <label style="font-size:12px;color:var(--text-dim);">Create from</label>
+                <select class="input" id="new-branch-from" style="margin-bottom:16px;">
+                    <option value="main">main</option>
+                    <option value="develop">develop</option>
+                </select>
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button class="btn btn-sm" onclick="closeModal('new-branch-modal')">Cancel</button>
+                    <button class="btn btn-primary btn-sm" onclick="createBranch()">Create Branch</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ BOTTOM NAVIGATION ============ -->
     <nav class="bottom-nav">
         <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
         <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
@@ -86,5 +363,149 @@
         <a href="terminal/terminal.html" class="nav-item"><span class="nav-icon">⬛</span>Terminal</a>
         <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
+
+    <!-- ============ TOAST ============ -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ============ SCRIPTS ============ -->
+    <script>
+        const branches = ['main', 'develop', 'feature/new-ui', 'bugfix/login-fix'];
+        let currentBranch = 'main';
+        let stagedFiles = ['MainActivity.java', 'main.xml'];
+        let unstagedFiles = ['README.md'];
+        let stashes = [{ message: 'WIP: Dashboard improvements', time: '1 hour ago', files: 3 }];
+
+        // ===== TABS =====
+        document.querySelectorAll('.git-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.git-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.git-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById('panel-' + this.dataset.panel).classList.add('active');
+            });
+        });
+
+        // ===== COMMIT =====
+        function commit() {
+            const msg = document.getElementById('commit-message').value.trim();
+            if (!msg) { showToast('⚠ Enter a commit message', 'error'); return; }
+            if (stagedFiles.length === 0) { showToast('⚠ No staged changes', 'error'); return; }
+            document.getElementById('commit-message').value = '';
+            stagedFiles = [];
+            renderChanges();
+            showToast('✓ Committed: ' + msg, 'success');
+        }
+
+        function stageAll() { stagedFiles = [...stagedFiles, ...unstagedFiles]; unstagedFiles = []; renderChanges(); showToast('📦 All files staged'); }
+        function unstageAll() { unstagedFiles = [...unstagedFiles, ...stagedFiles]; stagedFiles = []; renderChanges(); showToast('↩ All files unstaged'); }
+        function stageFile(f) { unstagedFiles = unstagedFiles.filter(x => x !== f); stagedFiles.push(f); renderChanges(); }
+        function unstageFile(f) { stagedFiles = stagedFiles.filter(x => x !== f); unstagedFiles.push(f); renderChanges(); }
+        function discardChanges() { if (confirm('Discard all changes?')) { unstagedFiles = []; renderChanges(); showToast('🗑 Changes discarded'); } }
+
+        function renderChanges() {
+            document.getElementById('staged-count').textContent = stagedFiles.length;
+            document.getElementById('unstaged-count').textContent = unstagedFiles.length;
+            document.getElementById('stat-changes').textContent = stagedFiles.length + unstagedFiles.length;
+            document.getElementById('staged-files').innerHTML = stagedFiles.length ? stagedFiles.map(f => `<div class="change-item"><span class="change-indicator change-modified">M</span><span class="file-path">${f}</span><button class="btn btn-sm" onclick="unstageFile('${f}')">Unstage</button></div>`).join('') : '<div style="color:var(--text-dim);padding:10px;font-size:12px;">No staged changes</div>';
+            document.getElementById('unstaged-files').innerHTML = unstagedFiles.length ? unstagedFiles.map(f => `<div class="change-item"><span class="change-indicator change-untracked">?</span><span class="file-path">${f}</span><button class="btn btn-sm" onclick="stageFile('${f}')">Stage</button></div>`).join('') : '<div style="color:var(--text-dim);padding:10px;font-size:12px;">Working tree clean</div>';
+        }
+
+        // ===== BRANCHES =====
+        function switchBranch(name) {
+            currentBranch = name;
+            document.getElementById('current-branch').textContent = name;
+            document.getElementById('branch-status').textContent = '• Up to date with origin/' + name;
+            closeModal('branch-modal');
+            renderBranches();
+            showToast('🔀 Switched to: ' + name);
+        }
+
+        function createBranch() {
+            const name = document.getElementById('new-branch-name').value.trim();
+            if (!name) { showToast('⚠ Enter branch name', 'error'); return; }
+            branches.push(name);
+            currentBranch = name;
+            document.getElementById('current-branch').textContent = name;
+            document.getElementById('stat-branches').textContent = branches.length;
+            closeModal('new-branch-modal');
+            document.getElementById('new-branch-name').value = '';
+            renderBranches();
+            showToast('✅ Created branch: ' + name);
+        }
+
+        function renderBranches() {
+            document.getElementById('branch-list').innerHTML = branches.map(b => `
+                <div class="branch-item ${b === currentBranch ? 'current' : ''}" ${b !== currentBranch ? `onclick="switchBranch('${b}')"` : ''}>
+                    <span class="branch-indicator ${b === currentBranch ? 'current' : 'other'}"></span>
+                    <span style="flex:1;${b === currentBranch ? 'font-weight:600;color:var(--green);' : ''}">${b}</span>
+                    ${b === currentBranch ? '<span class="badge badge-success">Current</span>' : '<button class="btn btn-sm">Switch</button>'}
+                </div>
+            `).join('');
+        }
+
+        function filterBranches() {
+            const q = document.getElementById('branch-search').value.toLowerCase();
+            document.getElementById('branch-search-results').innerHTML = branches.filter(b => b.includes(q)).map(b => `
+                <div class="branch-item" onclick="switchBranch('${b}')">
+                    <span class="branch-indicator ${b === currentBranch ? 'current' : 'other'}"></span>
+                    <span style="flex:1;">${b}</span>
+                    ${b === currentBranch ? '<span class="badge badge-success">Current</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        // ===== REMOTE =====
+        function pushToRemote() { showToast('↑ Pushing to origin/' + currentBranch + '...'); setTimeout(() => { document.getElementById('branch-status').textContent = '• Up to date with origin/' + currentBranch; showToast('✓ Push successful!', 'success'); }, 1500); }
+        function pullFromRemote() { showToast('↓ Pulling from origin...'); setTimeout(() => showToast('✓ Pull successful!', 'success'), 1500); }
+        function fetchAll() { showToast('↓ Fetching all remotes...'); setTimeout(() => showToast('✓ Fetch complete', 'success'), 1000); }
+        function forcePush() { if (confirm('⚠ Force push can overwrite remote. Continue?')) showToast('⚠ Force push executed'); }
+
+        // ===== STASH =====
+        function stashSave() { stashes.unshift({ message: 'WIP: ' + new Date().toLocaleString(), time: 'Just now', files: unstagedFiles.length }); unstagedFiles = []; renderStash(); renderChanges(); showToast('📦 Changes stashed'); }
+        function stashApply(i) { showToast('Stash applied'); }
+        function stashPop(i) { stashes.splice(i, 1); renderStash(); showToast('Stash popped'); }
+        function stashDrop(i) { stashes.splice(i, 1); renderStash(); showToast('Stash dropped'); }
+
+        function renderStash() {
+            document.getElementById('stat-stashes').textContent = stashes.length;
+            document.getElementById('stash-list').innerHTML = stashes.length ? stashes.map((s, i) => `
+                <div class="stash-item">
+                    <div style="display:flex;justify-content:space-between;"><strong>${s.message}</strong><span style="font-size:10px;color:var(--text-dim);">${s.time}</span></div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">⎇ ${currentBranch} • ${s.files} files</div>
+                    <div style="display:flex;gap:6px;margin-top:8px;">
+                        <button class="btn btn-sm" onclick="stashApply(${i})">Apply</button>
+                        <button class="btn btn-sm" onclick="stashPop(${i})">Pop</button>
+                        <button class="btn btn-sm" style="color:var(--red);" onclick="stashDrop(${i})">Drop</button>
+                    </div>
+                </div>
+            `).join('') : '<div style="color:var(--text-dim);padding:20px;text-align:center;">No stashed changes</div>';
+        }
+
+        // ===== MODALS =====
+        function openModal(id) { document.getElementById(id).classList.add('show'); if (id === 'branch-modal') filterBranches(); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+        document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('show'); }));
+
+        // ===== TOAST =====
+        function showToast(msg, type) {
+            const el = document.getElementById('toast');
+            el.textContent = msg; el.classList.add('show');
+            if (type === 'success') { el.style.background = 'var(--green)'; el.style.color = '#fff'; }
+            else if (type === 'error') { el.style.background = 'var(--red)'; el.style.color = '#fff'; }
+            else { el.style.background = ''; el.style.color = ''; }
+            clearTimeout(el._t);
+            el._t = setTimeout(() => { el.classList.remove('show'); el.style.background = ''; el.style.color = ''; }, 2500);
+        }
+
+        // ===== KEYBOARD =====
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); commit(); }
+        });
+
+        // ===== INIT =====
+        renderChanges();
+        renderBranches();
+        renderStash();
+    </script>
 </body>
 </html>

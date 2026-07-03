@@ -2,52 +2,177 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1e1e1e">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Search - NexusCode</title>
-    <link rel="stylesheet" href="css/themes/dark-theme.css">
+    <link rel="stylesheet" href="css/unified.css">
     <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
-        .page { max-width: 700px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
-        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
-        .back-btn:hover { color: var(--text-primary); }
-        .page-title { font-size: 24px; font-weight: 700; }
-        .search-container { position: relative; margin-bottom: 20px; }
-        .search-input { width: 100%; padding: 14px 16px; padding-left: 44px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 12px; color: var(--text-primary); font-size: 15px; outline: none; }
-        .search-input:focus { border-color: var(--accent-primary, #007acc); }
-        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
-        .result-item { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
-        .result-item:hover { border-color: var(--accent-primary); }
-        .result-file { font-size: 12px; color: var(--accent-primary); margin-bottom: 4px; }
-        .result-line { font-size: 13px; font-family: monospace; }
-        .result-match { background: rgba(255, 170, 0, 0.3); padding: 0 2px; border-radius: 2px; }
-        .no-results { text-align: center; padding: 40px; color: var(--text-secondary); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
-        .nav-item.active { color: var(--accent-primary); }
-        .nav-icon { font-size: 20px; }
+        .search-container {
+            position: relative; margin-bottom: var(--space-md);
+        }
+        .search-container .search-icon {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            font-size: 18px; color: var(--text-dim); z-index: 2;
+        }
+        .search-container .search-input {
+            width: 100%; padding: 14px 16px 14px 48px;
+            background: var(--bg-card); border: 2px solid var(--border);
+            border-radius: var(--radius); color: var(--text); font-size: 15px;
+            font-family: var(--font-sans); outline: none; transition: border-color 0.2s;
+        }
+        .search-container .search-input:focus { border-color: var(--accent); }
+        .search-container .search-shortcut {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            font-size: 11px; color: var(--text-dim); background: var(--bg-hover);
+            padding: 3px 8px; border-radius: 4px; font-family: var(--font-mono);
+        }
+        
+        /* Filter bar */
+        .filter-bar {
+            display: flex; gap: 6px; margin-bottom: var(--space-md); flex-wrap: wrap; align-items: center;
+        }
+        .filter-chip {
+            padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim); cursor: pointer;
+            font-size: 11px; transition: all 0.15s; white-space: nowrap;
+        }
+        .filter-chip:hover { border-color: var(--accent); color: var(--text); }
+        .filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .filter-chip .count { font-size: 10px; opacity: 0.7; }
+        
+        /* Results */
+        .results-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: var(--space-sm); font-size: 12px; color: var(--text-dim);
+        }
+        .result-item {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: var(--space-md); margin-bottom: 8px;
+            cursor: pointer; transition: all 0.15s; display: flex; gap: 14px; align-items: flex-start;
+        }
+        .result-item:hover { border-color: var(--accent); background: var(--bg-hover); }
+        .result-icon {
+            width: 36px; height: 36px; border-radius: 8px; display: flex;
+            align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+        }
+        .result-content { flex: 1; min-width: 0; }
+        .result-file {
+            font-size: 13px; font-weight: 600; margin-bottom: 2px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .result-path { font-size: 10px; color: var(--text-dim); font-family: var(--font-mono); }
+        .result-preview {
+            font-size: 12px; font-family: var(--font-mono); color: var(--text-dim);
+            background: var(--bg-hover); padding: 8px 10px; border-radius: 6px;
+            margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .result-preview mark {
+            background: #d2991d33; color: var(--orange); padding: 0 3px; border-radius: 3px;
+        }
+        .result-line { font-size: 10px; color: var(--accent); white-space: nowrap; }
+        
+        /* Empty state */
+        .empty-search {
+            text-align: center; padding: 60px 20px;
+        }
+        .empty-search .icon { font-size: 64px; display: block; margin-bottom: 16px; }
+        .empty-search h3 { margin-bottom: 8px; }
+        .empty-search p { color: var(--text-dim); }
+        .empty-search .suggestions {
+            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px;
+        }
+        .suggestion-chip {
+            padding: 6px 14px; border-radius: 16px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--accent); cursor: pointer;
+            font-size: 12px; transition: all 0.15s;
+        }
+        .suggestion-chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+        
+        /* Match count badge */
+        .match-count {
+            font-size: 11px; padding: 2px 8px; border-radius: 10px;
+            background: var(--bg-hover); color: var(--text-dim);
+        }
+        
+        /* Recent searches */
+        .recent-searches { margin-bottom: var(--space-lg); }
+        .recent-item {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim); cursor: pointer;
+            font-size: 11px; margin: 0 6px 6px 0; transition: all 0.15s;
+        }
+        .recent-item:hover { border-color: var(--accent); color: var(--text); }
+        
+        @media (max-width:600px) {
+            .search-container .search-shortcut { display: none; }
+            .result-item { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="topbar">
-            <a href="home.html" class="back-btn">← Back</a>
+    <!-- ============ MAIN CONTAINER ============ -->
+    <div class="container">
+        
+        <!-- ============ PAGE HEADER ============ -->
+        <header class="page-header">
+            <a href="home.html" class="back-btn">🏠 Home</a>
             <h1 class="page-title">🔍 Search</h1>
-        </div>
+            <span class="badge badge-primary" style="margin-left:auto;" id="result-badge">Ready</span>
+        </header>
 
+        <!-- ============ SEARCH INPUT ============ -->
         <div class="search-container">
             <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="search-input" placeholder="Search in files..." autofocus>
+            <input type="text" class="search-input" id="search-input" placeholder="Search across all project files..." autofocus>
+            <span class="search-shortcut">Ctrl+F</span>
         </div>
 
+        <!-- ============ RECENT SEARCHES ============ -->
+        <div class="recent-searches" id="recent-searches">
+            <span style="font-size:11px;color:var(--text-dim);margin-right:8px;">Recent:</span>
+        </div>
+
+        <!-- ============ FILTER BAR ============ -->
+        <div class="filter-bar">
+            <button class="filter-chip active" data-type="all">All Files</button>
+            <button class="filter-chip" data-type="html">🌐 HTML</button>
+            <button class="filter-chip" data-type="css">🎨 CSS</button>
+            <button class="filter-chip" data-type="javascript">📜 JavaScript</button>
+            <button class="filter-chip" data-type="markdown">📝 Markdown</button>
+            <button class="filter-chip" data-type="json">📋 JSON</button>
+            <span style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+                <button class="btn btn-sm" id="btn-case-sensitive" onclick="toggleCase()">Aa</button>
+                <button class="btn btn-sm" id="btn-regex" onclick="toggleRegex()">.*</button>
+            </span>
+        </div>
+
+        <!-- ============ RESULTS HEADER ============ -->
+        <div class="results-header" id="results-header" style="display:none;">
+            <span id="results-count">0 results</span>
+            <span id="search-time" style="font-size:10px;"></span>
+        </div>
+
+        <!-- ============ RESULTS ============ -->
         <div id="search-results">
-            <div class="no-results">Type to search across all project files</div>
+            <div class="empty-search">
+                <span class="icon">🔍</span>
+                <h3>Search Across Your Project</h3>
+                <p>Find files, functions, classes, and more</p>
+                <div class="suggestions">
+                    <span class="suggestion-chip" onclick="quickSearch('function')">function</span>
+                    <span class="suggestion-chip" onclick="quickSearch('import')">import</span>
+                    <span class="suggestion-chip" onclick="quickSearch('class')">class</span>
+                    <span class="suggestion-chip" onclick="quickSearch('TODO')">TODO</span>
+                    <span class="suggestion-chip" onclick="quickSearch('console')">console</span>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- ============ BOTTOM NAVIGATION ============ -->
     <nav class="bottom-nav">
         <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
         <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
@@ -56,52 +181,269 @@
         <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
 
+    <!-- ============ TOAST ============ -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ============ SCRIPTS ============ -->
     <script>
-        const mockFiles = [
-            { file: 'index.html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <title>My Project</title>\n    <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n    <h1>Hello NexusCode!</h1>\n    <script src="script.js"></script>\n</body>\n</html>' },
-            { file: 'styles.css', content: 'body {\n    font-family: Arial, sans-serif;\n    margin: 40px;\n    background: #1e1e1e;\n    color: #cccccc;\n}\n\nh1 {\n    color: #58a6ff;\n    font-size: 2em;\n}' },
-            { file: 'script.js', content: 'console.log("Welcome to NexusCode!");\n\ndocument.addEventListener("DOMContentLoaded", () => {\n    const heading = document.querySelector("h1");\n    heading.style.color = "#58a6ff";\n});' },
-            { file: 'README.md', content: '# My Project\n\nBuilt with **NexusCode Studio**\n\n## Features\n- Live Preview\n- Terminal\n- File Management\n- Search' },
+        // ===== FILE DATABASE =====
+        const fileDatabase = [
+            {
+                file: 'index.html', type: 'html',
+                content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>NexusCode App</title>\n    <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n    <div class="container">\n        <h1>Hello NexusCode!</h1>\n        <p>Built with NexusCode Studio IDE</p>\n        <button onclick="handleClick()">Click Me</button>\n        <div id="output"></div>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>'
+            },
+            {
+                file: 'styles.css', type: 'css',
+                content: '/* Main Styles */\n:root {\n    --primary: #667eea;\n    --secondary: #764ba2;\n}\n\n* { margin: 0; padding: 0; box-sizing: border-box; }\n\nbody {\n    font-family: "Inter", system-ui, sans-serif;\n    background: linear-gradient(135deg, var(--primary), var(--secondary));\n    color: white;\n    min-height: 100vh;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.container {\n    text-align: center;\n    padding: 40px;\n    background: rgba(255,255,255,0.1);\n    border-radius: 16px;\n    backdrop-filter: blur(10px);\n}\n\nh1 {\n    font-size: 48px;\n    margin-bottom: 16px;\n}\n\np {\n    font-size: 18px;\n    opacity: 0.9;\n    margin-bottom: 24px;\n}\n\nbutton {\n    padding: 14px 32px;\n    background: white;\n    color: var(--primary);\n    border: none;\n    border-radius: 30px;\n    font-size: 16px;\n    font-weight: 600;\n    cursor: pointer;\n    transition: transform 0.2s, box-shadow 0.2s;\n}\n\nbutton:hover {\n    transform: scale(1.05);\n    box-shadow: 0 8px 24px rgba(0,0,0,0.2);\n}\n\n#output {\n    margin-top: 20px;\n    padding: 16px;\n    background: rgba(255,255,255,0.15);\n    border-radius: 8px;\n    min-height: 40px;\n}'
+            },
+            {
+                file: 'script.js', type: 'javascript',
+                content: '// Main Application Script\n"use strict";\n\nconsole.log("NexusCode App initialized");\n\nlet clickCount = 0;\nconst MAX_CLICKS = 10;\n\nfunction handleClick() {\n    clickCount++;\n    console.log(`Button clicked: ${clickCount} times`);\n    \n    const output = document.getElementById("output");\n    if (output) {\n        output.innerHTML = `Clicked <strong>${clickCount}</strong> time${clickCount !== 1 ? "s" : ""}!`;\n        if (clickCount >= MAX_CLICKS) {\n            output.innerHTML += "<br>🎉 You reached the maximum!";\n        }\n    }\n}\n\nfunction resetCounter() {\n    clickCount = 0;\n    console.log("Counter reset");\n}\n\n// TODO: Add more interactive features\n// TODO: Implement dark mode toggle\n// FIXME: Handle edge case when output element is missing\n\ndocument.addEventListener("DOMContentLoaded", () => {\n    console.log("DOM fully loaded and ready");\n});'
+            },
+            {
+                file: 'README.md', type: 'markdown',
+                content: '# NexusCode Project\n\nBuilt with **NexusCode Studio IDE**\n\n## 🚀 Features\n\n- ✏️ Code Editor with syntax highlighting\n- 👁 Live Preview with device emulators\n- ⬛ Integrated Terminal with 25+ commands\n- 📊 Project Dashboard with analytics\n- ⎇ Git Version Control\n- 🔍 Global Search\n- 📋 Template Library\n- 🧩 Plugin System\n\n## 📁 Project Structure\n\n```\nproject/\n├── index.html\n├── styles.css\n├── script.js\n└── README.md\n```\n\n## 🔧 Getting Started\n\n1. Open `index.html` in the editor\n2. Make changes and see live preview\n3. Use terminal for commands\n4. Commit changes with Git\n\n## 📝 TODO\n\n- [ ] Add user authentication\n- [ ] Implement API endpoints\n- [ ] Write unit tests\n- [ ] Deploy to production\n\n## 📄 License\n\nMIT License - See LICENSE file'
+            },
+            {
+                file: 'package.json', type: 'json',
+                content: '{\n    "name": "nexuscode-app",\n    "version": "2.0.0",\n    "description": "Production-Grade Browser IDE",\n    "main": "index.html",\n    "scripts": {\n        "start": "node server.js",\n        "dev": "node server.prod.js",\n        "build": "bash build.sh"\n    },\n    "keywords": ["ide", "editor", "android", "webview"],\n    "author": "dnyf-platform",\n    "license": "MIT"\n}'
+            },
+            {
+                file: 'server.js', type: 'javascript',
+                content: '// NexusCode Server\nconst http = require("http");\nconst fs = require("fs");\nconst path = require("path");\n\nconst PORT = process.env.PORT || 8080;\nconst HOST = process.env.HOST || "0.0.0.0";\n\nconst server = http.createServer((req, res) => {\n    let filePath = path.join(__dirname, req.url === "/" ? "home.html" : req.url);\n    \n    fs.readFile(filePath, (err, data) => {\n        if (err) {\n            res.writeHead(404);\n            res.end("Not Found");\n            return;\n        }\n        res.writeHead(200);\n        res.end(data);\n    });\n});\n\nserver.listen(PORT, HOST, () => {\n    console.log(`Server running at http://${HOST}:${PORT}`);\n});'
+            }
         ];
 
-        function search(query) {
-            const results = document.getElementById('search-results');
-            if (!query) {
-                results.innerHTML = '<div class="no-results">Type to search across all project files</div>';
+        // ===== STATE =====
+        let currentFilter = 'all';
+        let caseSensitive = false;
+        let useRegex = false;
+        let recentSearches = [];
+
+        // ===== LOAD RECENT =====
+        try {
+            recentSearches = JSON.parse(localStorage.getItem('nexuscode_recent_searches') || '[]');
+        } catch(e) { recentSearches = []; }
+        renderRecentSearches();
+
+        // ===== SEARCH =====
+        function performSearch(query) {
+            const startTime = performance.now();
+            const resultsContainer = document.getElementById('search-results');
+            const resultsHeader = document.getElementById('results-header');
+            const badge = document.getElementById('result-badge');
+
+            if (!query.trim()) {
+                resultsContainer.innerHTML = `
+                    <div class="empty-search">
+                        <span class="icon">🔍</span>
+                        <h3>Search Across Your Project</h3>
+                        <p>Find files, functions, classes, and more</p>
+                        <div class="suggestions">
+                            <span class="suggestion-chip" onclick="quickSearch('function')">function</span>
+                            <span class="suggestion-chip" onclick="quickSearch('import')">import</span>
+                            <span class="suggestion-chip" onclick="quickSearch('class')">class</span>
+                            <span class="suggestion-chip" onclick="quickSearch('TODO')">TODO</span>
+                            <span class="suggestion-chip" onclick="quickSearch('console')">console</span>
+                        </div>
+                    </div>`;
+                resultsHeader.style.display = 'none';
+                badge.textContent = 'Ready';
+                badge.className = 'badge badge-primary';
                 return;
             }
 
-            const matches = [];
-            mockFiles.forEach(file => {
+            // Filter files by type
+            let filesToSearch = fileDatabase;
+            if (currentFilter !== 'all') {
+                filesToSearch = fileDatabase.filter(f => f.type === currentFilter);
+            }
+
+            // Search
+            const results = [];
+            filesToSearch.forEach(file => {
                 const lines = file.content.split('\n');
                 lines.forEach((line, index) => {
-                    if (line.toLowerCase().includes(query.toLowerCase())) {
-                        matches.push({ file: file.file, line: index + 1, content: line, query });
+                    let matches = false;
+                    try {
+                        if (useRegex) {
+                            const regex = new RegExp(query, caseSensitive ? 'g' : 'gi');
+                            matches = regex.test(line);
+                        } else {
+                            const searchLine = caseSensitive ? line : line.toLowerCase();
+                            const searchQuery = caseSensitive ? query : query.toLowerCase();
+                            matches = searchLine.includes(searchQuery);
+                        }
+                    } catch(e) { return; }
+
+                    if (matches) {
+                        results.push({
+                            file: file.file,
+                            type: file.type,
+                            line: index + 1,
+                            content: line.trim(),
+                            query: query
+                        });
                     }
                 });
             });
 
-            if (matches.length === 0) {
-                results.innerHTML = '<div class="no-results">No results found for "' + query + '"</div>';
+            // Update header
+            const elapsed = (performance.now() - startTime).toFixed(0);
+            resultsHeader.style.display = 'flex';
+            document.getElementById('results-count').textContent = results.length + ' result' + (results.length !== 1 ? 's' : '');
+            document.getElementById('search-time').textContent = elapsed + 'ms';
+            badge.textContent = results.length + ' found';
+            badge.className = results.length > 0 ? 'badge badge-success' : 'badge badge-warning';
+
+            // Render results
+            if (results.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="empty-search">
+                        <span class="icon">😕</span>
+                        <h3>No results found</h3>
+                        <p>No files match "${query}"</p>
+                        <div class="suggestions">
+                            <span class="suggestion-chip" onclick="quickSearch('function')">Try: function</span>
+                            <span class="suggestion-chip" onclick="quickSearch('TODO')">Try: TODO</span>
+                        </div>
+                    </div>`;
                 return;
             }
 
-            results.innerHTML = matches.map(m => `
-                <div class="result-item" onclick="openFile('${m.file}')">
-                    <div class="result-file">📄 ${m.file}:${m.line}</div>
-                    <div class="result-line">${m.content.replace(new RegExp(m.query, 'gi'), match => `<span class="result-match">${match}</span>`)}</div>
+            resultsContainer.innerHTML = results.map((r, i) => `
+                <div class="result-item fade-in" style="animation-delay:${i * 0.02}s;" onclick="openFile('${r.file}', ${r.line})">
+                    <div class="result-icon" style="background:${getTypeColor(r.type)}22;">${getTypeIcon(r.type)}</div>
+                    <div class="result-content">
+                        <div class="result-file">
+                            ${r.file}
+                            <span class="result-line">Line ${r.line}</span>
+                        </div>
+                        <div class="result-path">📁 project/${r.file}</div>
+                        <div class="result-preview">${highlightMatches(r.content, r.query)}</div>
+                    </div>
+                    <span class="match-count">${countMatches(r.content, r.query)} match</span>
                 </div>
             `).join('');
+
+            // Save to recent
+            if (!recentSearches.includes(query)) {
+                recentSearches.unshift(query);
+                if (recentSearches.length > 8) recentSearches.pop();
+                localStorage.setItem('nexuscode_recent_searches', JSON.stringify(recentSearches));
+                renderRecentSearches();
+            }
         }
 
-        function openFile(file) {
+        function highlightMatches(text, query) {
+            try {
+                const regex = useRegex ? new RegExp(query, 'gi') : new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                return text.replace(regex, match => `<mark>${match}</mark>`);
+            } catch(e) {
+                return text;
+            }
+        }
+
+        function countMatches(text, query) {
+            try {
+                const regex = useRegex ? new RegExp(query, 'gi') : new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                return (text.match(regex) || []).length;
+            } catch(e) { return 0; }
+        }
+
+        function getTypeIcon(type) {
+            const icons = { html: '🌐', css: '🎨', javascript: '📜', markdown: '📝', json: '📋' };
+            return icons[type] || '📄';
+        }
+
+        function getTypeColor(type) {
+            const colors = { html: '#ff6b35', css: '#61dafb', javascript: '#f7df1e', markdown: '#42b883', json: '#ff9800' };
+            return colors[type] || '#888';
+        }
+
+        // ===== ACTIONS =====
+        function openFile(file, line) {
             localStorage.setItem('nexuscode_open_file', file);
+            localStorage.setItem('nexuscode_open_line', line);
             window.location.href = 'index.html';
         }
 
-        document.getElementById('search-input').addEventListener('input', function() {
-            search(this.value);
+        function quickSearch(term) {
+            document.getElementById('search-input').value = term;
+            performSearch(term);
+            document.getElementById('search-input').focus();
+        }
+
+        function toggleCase() {
+            caseSensitive = !caseSensitive;
+            document.getElementById('btn-case-sensitive').style.background = caseSensitive ? 'var(--accent)' : '';
+            document.getElementById('btn-case-sensitive').style.color = caseSensitive ? '#fff' : '';
+            performSearch(document.getElementById('search-input').value);
+        }
+
+        function toggleRegex() {
+            useRegex = !useRegex;
+            document.getElementById('btn-regex').style.background = useRegex ? 'var(--accent)' : '';
+            document.getElementById('btn-regex').style.color = useRegex ? '#fff' : '';
+            performSearch(document.getElementById('search-input').value);
+        }
+
+        function renderRecentSearches() {
+            const container = document.getElementById('recent-searches');
+            container.innerHTML = '<span style="font-size:11px;color:var(--text-dim);margin-right:8px;">Recent:</span>' +
+                recentSearches.map(s => `<span class="recent-item" onclick="quickSearch('${s}')">🕐 ${s}</span>`).join('') +
+                (recentSearches.length > 0 ? '<span class="recent-item" onclick="clearRecent()" style="color:var(--red);">🗑 Clear</span>' : '<span style="font-size:11px;color:var(--text-dim);">No recent searches</span>');
+        }
+
+        function clearRecent() {
+            recentSearches = [];
+            localStorage.removeItem('nexuscode_recent_searches');
+            renderRecentSearches();
+            showToast('🗑 Recent searches cleared');
+        }
+
+        // ===== FILTERS =====
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.type;
+                performSearch(document.getElementById('search-input').value);
+            });
         });
+
+        // ===== SEARCH INPUT =====
+        const searchInput = document.getElementById('search-input');
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => performSearch(this.value), 200);
+        });
+
+        // ===== KEYBOARD =====
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                performSearch('');
+                searchInput.blur();
+            }
+        });
+
+        // ===== TOAST =====
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg; el.classList.add('show');
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        // ===== INIT =====
+        searchInput.focus();
     </script>
 </body>
 </html>

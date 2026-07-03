@@ -2,47 +2,121 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1e1e1e">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Plugins - NexusCode</title>
-    <link rel="stylesheet" href="css/themes/dark-theme.css">
+    <link rel="stylesheet" href="css/unified.css">
     <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
-        .page { max-width: 800px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
-        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
-        .back-btn:hover { color: var(--text-primary); }
-        .page-title { font-size: 24px; font-weight: 700; }
-        .plugin-card { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 12px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
-        .plugin-icon { font-size: 32px; min-width: 48px; text-align: center; }
+        .plugin-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: var(--space-lg); margin-bottom: var(--space-md);
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .plugin-card:hover { border-color: var(--accent); }
+        .plugin-card.disabled { opacity: 0.5; }
+        .plugin-card.disabled:hover { opacity: 0.8; }
+        .plugin-header {
+            display: flex; align-items: flex-start; gap: 16px; margin-bottom: 8px;
+        }
+        .plugin-icon {
+            width: 52px; height: 52px; border-radius: var(--radius-sm); display: flex;
+            align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;
+        }
         .plugin-info { flex: 1; }
-        .plugin-info h4 { font-size: 15px; margin-bottom: 2px; }
-        .plugin-info p { font-size: 12px; color: var(--text-secondary); }
-        .plugin-status { font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 500; }
-        .plugin-status.active { background: #3fb95022; color: #3fb950; }
-        .plugin-status.inactive { background: #6a6a6a22; color: #6a6a6a; }
-        .toggle-btn { padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-size: 12px; background: var(--bg-tertiary); color: var(--text-primary); }
-        .toggle-btn.enable { background: var(--accent-primary, #007acc); color: white; border-color: var(--accent-primary); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
-        .nav-item.active { color: var(--accent-primary); }
-        .nav-icon { font-size: 20px; }
+        .plugin-info h4 { font-size: 15px; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+        .plugin-info .version { font-size: 11px; color: var(--text-dim); font-weight: normal; }
+        .plugin-info .author { font-size: 11px; color: var(--text-dim); }
+        .plugin-info p { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-top: 4px; }
+        .plugin-meta {
+            display: flex; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--text-dim);
+            flex-wrap: wrap;
+        }
+        .plugin-meta span { display: flex; align-items: center; gap: 4px; }
+        .plugin-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+        .plugin-status {
+            display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+        }
+        .status-indicator { width: 8px; height: 8px; border-radius: 50%; }
+        .status-indicator.active { background: var(--green); }
+        .status-indicator.inactive { background: var(--text-dim); }
+        .status-indicator.error { background: var(--red); }
+        
+        /* Stats Banner */
+        .stats-banner {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: var(--space-lg); margin-bottom: var(--space-lg);
+            display: flex; gap: var(--space-xl); flex-wrap: wrap;
+        }
+        .stat-item { text-align: center; min-width: 80px; }
+        .stat-item .value { font-size: 28px; font-weight: 700; color: var(--accent); }
+        .stat-item .label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* Filter Tabs */
+        .filter-tabs { display: flex; gap: 6px; margin-bottom: var(--space-md); flex-wrap: wrap; }
+        .filter-tab {
+            padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim); cursor: pointer;
+            font-size: 12px; transition: all 0.15s;
+        }
+        .filter-tab:hover { border-color: var(--accent); color: var(--text); }
+        .filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .filter-tab .count { font-size: 10px; opacity: 0.7; }
+        
+        /* Settings within plugin */
+        .plugin-settings {
+            margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: none;
+        }
+        .plugin-settings.open { display: block; }
+        .plugin-setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0; font-size: 12px;
+        }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="topbar">
-            <a href="home.html" class="back-btn">← Back</a>
+    <!-- ============ MAIN CONTAINER ============ -->
+    <div class="container">
+        
+        <!-- ============ PAGE HEADER ============ -->
+        <header class="page-header">
+            <a href="home.html" class="back-btn">🏠 Home</a>
             <h1 class="page-title">🧩 Plugins</h1>
+            <button class="btn btn-sm" style="margin-left:auto;" onclick="toggleAllPlugins()">🔄 Toggle All</button>
+        </header>
+
+        <!-- ============ STATS BANNER ============ -->
+        <div class="stats-banner fade-in">
+            <div class="stat-item"><div class="value" id="total-plugins">10</div><div class="label">Total</div></div>
+            <div class="stat-item"><div class="value" id="active-plugins" style="color:var(--green);">7</div><div class="label">Active</div></div>
+            <div class="stat-item"><div class="value" id="inactive-plugins" style="color:var(--text-dim);">3</div><div class="label">Inactive</div></div>
+            <div class="stat-item"><div class="value" style="color:var(--purple);">∞</div><div class="label">Available</div></div>
         </div>
 
-        <div id="plugins-list">
-            <!-- Generated by JS -->
+        <!-- ============ FILTER TABS ============ -->
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All <span class="count">(10)</span></button>
+            <button class="filter-tab" data-filter="active">Active <span class="count">(7)</span></button>
+            <button class="filter-tab" data-filter="inactive">Inactive <span class="count">(3)</span></button>
+            <button class="filter-tab" data-filter="editor">✏️ Editor</button>
+            <button class="filter-tab" data-filter="tools">🔧 Tools</button>
+            <button class="filter-tab" data-filter="themes">🎨 Themes</button>
+        </div>
+
+        <!-- ============ PLUGINS LIST ============ -->
+        <div id="plugins-list"></div>
+
+        <!-- ============ MARKETPLACE PROMO ============ -->
+        <div class="card" style="text-align:center;padding:var(--space-xl);margin-top:var(--space-lg);">
+            <span style="font-size:48px;display:block;margin-bottom:12px;">🛒</span>
+            <h3 style="margin-bottom:8px;">Plugin Marketplace</h3>
+            <p style="color:var(--text-dim);margin-bottom:16px;">Discover and install more plugins from the community</p>
+            <span class="badge badge-warning">Coming in v2.1</span>
         </div>
     </div>
 
+    <!-- ============ BOTTOM NAVIGATION ============ -->
     <nav class="bottom-nav">
         <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
         <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
@@ -51,45 +125,205 @@
         <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
 
+    <!-- ============ TOAST ============ -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ============ SCRIPTS ============ -->
     <script>
+        // ===== PLUGIN DATA =====
         const plugins = [
-            { id: 'prettier', name: 'Prettier', icon: '✨', desc: 'Code formatter for consistent style', active: true },
-            { id: 'emmet', name: 'Emmet', icon: '⚡', desc: 'HTML/CSS expansion shortcuts', active: true },
-            { id: 'theme-manager', name: 'Theme Manager', icon: '🎨', desc: 'Switch between color themes', active: true },
-            { id: 'live-server', name: 'Live Server', icon: '🔄', desc: 'Auto-reload on file changes', active: false },
-            { id: 'git-lens', name: 'Git Lens', icon: '🔍', desc: 'Git blame and code annotations', active: false },
-            { id: 'autocomplete', name: 'AI Autocomplete', icon: '🤖', desc: 'Smart code suggestions', active: true },
-            { id: 'minimap', name: 'Minimap', icon: '🗺️', desc: 'Code overview minimap', active: true },
-            { id: 'snippets', name: 'Snippets', icon: '📋', desc: 'Code snippet library', active: false },
+            {
+                id: 'prettier', name: 'Prettier', icon: '✨', category: 'editor',
+                desc: 'Opinionated code formatter supporting HTML, CSS, JavaScript, JSON, and more.',
+                author: 'NexusCode Team', version: '1.3.0', installed: true, active: true,
+                rating: 4.8, installs: '12K', iconBg: '#ff6b3522'
+            },
+            {
+                id: 'emmet', name: 'Emmet', icon: '⚡', category: 'editor',
+                desc: 'High-speed HTML/CSS expansion with abbreviations and shortcuts.',
+                author: 'Emmet Team', version: '2.0.1', installed: true, active: true,
+                rating: 4.9, installs: '18K', iconBg: '#61dafb22'
+            },
+            {
+                id: 'theme-manager', name: 'Theme Manager', icon: '🎨', category: 'themes',
+                desc: 'Switch between dark, light, high-contrast, and custom themes with live preview.',
+                author: 'NexusCode Team', version: '1.0.0', installed: true, active: true,
+                rating: 4.5, installs: '8K', iconBg: '#764ba222'
+            },
+            {
+                id: 'liveserver', name: 'Live Server', icon: '🔄', category: 'tools',
+                desc: 'Auto-reload preview on file save with hot module replacement.',
+                author: 'Community', version: '0.9.5', installed: true, active: false,
+                rating: 4.7, installs: '15K', iconBg: '#43e97b22'
+            },
+            {
+                id: 'gitlens', name: 'Git Lens', icon: '🔍', category: 'tools',
+                desc: 'Inline git blame annotations, code lens, and repository visualization.',
+                author: 'GitKraken', version: '1.5.2', installed: true, active: false,
+                rating: 4.8, installs: '10K', iconBg: '#f093fb22'
+            },
+            {
+                id: 'ai-autocomplete', name: 'AI Autocomplete', icon: '🤖', category: 'editor',
+                desc: 'Smart code completions powered by on-device AI. Works offline.',
+                author: 'NexusCode Team', version: '0.5.0', installed: true, active: true,
+                rating: 4.3, installs: '5K', iconBg: '#4facfe22', isNew: true
+            },
+            {
+                id: 'minimap', name: 'Minimap', icon: '🗺️', category: 'editor',
+                desc: 'Code overview minimap for quick navigation and scroll preview.',
+                author: 'NexusCode Team', version: '1.1.0', installed: true, active: true,
+                rating: 4.4, installs: '7K', iconBg: '#667eea22'
+            },
+            {
+                id: 'snippets', name: 'Snippets Library', icon: '📋', category: 'editor',
+                desc: 'Collection of useful code snippets for HTML, CSS, JS, and more.',
+                author: 'Community', version: '0.8.2', installed: true, active: false,
+                rating: 4.2, installs: '6K', iconBg: '#e9456022'
+            },
+            {
+                id: 'color-picker', name: 'Color Picker', icon: '🌈', category: 'tools',
+                desc: 'Visual color picker with hex, RGB, HSL support and palette history.',
+                author: 'Community', version: '1.2.0', installed: true, active: true,
+                rating: 4.6, installs: '9K', iconBg: '#ff980022'
+            },
+            {
+                id: 'markdown-preview', name: 'Markdown Preview', icon: '📝', category: 'editor',
+                desc: 'Live markdown preview with GitHub-flavored rendering and syntax highlighting.',
+                author: 'NexusCode Team', version: '1.0.1', installed: true, active: true,
+                rating: 4.7, installs: '11K', iconBg: '#42b88322'
+            }
         ];
 
-        function renderPlugins() {
-            const container = document.getElementById('plugins-list');
-            container.innerHTML = plugins.map(p => `
-                <div class="plugin-card">
-                    <div class="plugin-icon">${p.icon}</div>
-                    <div class="plugin-info">
-                        <h4>${p.name}</h4>
-                        <p>${p.desc}</p>
+        // ===== STATE =====
+        let currentFilter = 'all';
+
+        // ===== RENDER =====
+        function render() {
+            let filtered = plugins;
+            
+            if (currentFilter === 'active') filtered = plugins.filter(p => p.active);
+            else if (currentFilter === 'inactive') filtered = plugins.filter(p => !p.active);
+            else if (currentFilter !== 'all') filtered = plugins.filter(p => p.category === currentFilter);
+
+            // Update stats
+            document.getElementById('total-plugins').textContent = plugins.length;
+            document.getElementById('active-plugins').textContent = plugins.filter(p => p.active).length;
+            document.getElementById('inactive-plugins').textContent = plugins.filter(p => !p.active).length;
+
+            // Render plugins
+            document.getElementById('plugins-list').innerHTML = filtered.map((p, i) => `
+                <div class="plugin-card fade-in ${!p.active ? 'disabled' : ''}" style="animation-delay:${i * 0.04}s;">
+                    <div class="plugin-header">
+                        <div class="plugin-icon" style="background:${p.iconBg};">${p.icon}</div>
+                        <div class="plugin-info">
+                            <h4>
+                                ${p.name}
+                                <span class="version">v${p.version}</span>
+                                ${p.isNew ? '<span class="badge badge-success">NEW</span>' : ''}
+                            </h4>
+                            <span class="author">👤 ${p.author}</span>
+                            <p>${p.desc}</p>
+                        </div>
                     </div>
-                    <span class="plugin-status ${p.active ? 'active' : 'inactive'}">${p.active ? 'Active' : 'Inactive'}</span>
-                    <button class="toggle-btn ${p.active ? '' : 'enable'}" data-id="${p.id}">
-                        ${p.active ? 'Disable' : 'Enable'}
-                    </button>
+                    <div class="plugin-meta">
+                        <span>⭐ ${p.rating}</span>
+                        <span>⬇ ${p.installs} installs</span>
+                        <span>📦 v${p.version}</span>
+                    </div>
+                    <div class="plugin-actions">
+                        <span class="plugin-status">
+                            <span class="status-indicator ${p.active ? 'active' : 'inactive'}"></span>
+                            ${p.active ? 'Active' : 'Inactive'}
+                        </span>
+                        <button class="btn btn-sm" onclick="showPluginSettings('${p.id}')">⚙ Settings</button>
+                        <button class="btn btn-sm" onclick="reinstallPlugin('${p.id}')">🔄 Reinstall</button>
+                        <button class="btn btn-sm ${p.active ? 'btn-danger' : 'btn-primary'}" onclick="togglePlugin('${p.id}')">
+                            ${p.active ? 'Disable' : 'Enable'}
+                        </button>
+                    </div>
+                    <div class="plugin-settings" id="settings-${p.id}">
+                        <div class="plugin-setting-row">
+                            <span>Auto-update</span>
+                            <span class="toggle on" onclick="this.classList.toggle('on')"></span>
+                        </div>
+                        <div class="plugin-setting-row">
+                            <span>Show in toolbar</span>
+                            <span class="toggle on" onclick="this.classList.toggle('on')"></span>
+                        </div>
+                    </div>
                 </div>
             `).join('');
-
-            document.querySelectorAll('.toggle-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.dataset.id;
-                    const plugin = plugins.find(p => p.id === id);
-                    plugin.active = !plugin.active;
-                    renderPlugins();
-                });
-            });
         }
 
-        renderPlugins();
+        // ===== ACTIONS =====
+        function togglePlugin(id) {
+            const p = plugins.find(pl => pl.id === id);
+            if (p) {
+                p.active = !p.active;
+                render();
+                showToast(p.active ? '✅ Enabled: ' + p.name : '⏸ Disabled: ' + p.name);
+                saveState();
+            }
+        }
+
+        function toggleAllPlugins() {
+            const allActive = plugins.every(p => p.active);
+            plugins.forEach(p => p.active = !allActive);
+            render();
+            showToast(allActive ? '⏸ All plugins disabled' : '✅ All plugins enabled');
+            saveState();
+        }
+
+        function showPluginSettings(id) {
+            const el = document.getElementById('settings-' + id);
+            const isOpen = el.classList.contains('open');
+            document.querySelectorAll('.plugin-settings').forEach(s => s.classList.remove('open'));
+            if (!isOpen) el.classList.add('open');
+        }
+
+        function reinstallPlugin(id) {
+            const p = plugins.find(pl => pl.id === id);
+            showToast('🔄 Reinstalling ' + p.name + '...');
+            setTimeout(() => showToast('✅ ' + p.name + ' reinstalled!'), 1500);
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('nexuscode_plugins', JSON.stringify(plugins.map(p => ({ id: p.id, active: p.active }))));
+            } catch(e) {}
+        }
+
+        function loadState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('nexuscode_plugins') || '[]');
+                saved.forEach(s => {
+                    const p = plugins.find(pl => pl.id === s.id);
+                    if (p) p.active = s.active;
+                });
+            } catch(e) {}
+        }
+
+        // ===== FILTERS =====
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                render();
+            });
+        });
+
+        // ===== TOAST =====
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg; el.classList.add('show');
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        // ===== INIT =====
+        loadState();
+        render();
     </script>
 </body>
 </html>

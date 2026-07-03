@@ -2,482 +2,370 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1e1e2e">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Run & Preview - NexusCode</title>
+    <link rel="stylesheet" href="css/unified.css">
     <style>
-        :root {
-            --bg: #1e1e2e; --bg2: #181825; --surface: #313244;
-            --text: #cdd6f4; --text2: #a6adc8; --accent: #89b4fa;
-            --green: #a6e3a1; --red: #f38ba8; --yellow: #f9e2af;
-            --border: #45475a; --radius: 12px; --safe: env(safe-area-inset-bottom, 0px);
+        /* Device Frame */
+        .preview-area {
+            display: flex; align-items: center; justify-content: center;
+            padding: var(--space-lg) 0; min-height: 400px;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; position:fixed; }
-        
-        .app { display:flex; flex-direction:column; height:100dvh; }
-        
-        /* Top Bar */
-        .topbar {
-            display:flex; align-items:center; gap:12px; padding:10px 14px;
-            background:var(--bg2); border-bottom:1px solid var(--border); flex-shrink:0;
-        }
-        .back-btn { color:var(--text2); text-decoration:none; font-size:18px; padding:6px 10px; border-radius:8px; transition:.2s; }
-        .back-btn:hover { background:var(--surface); color:var(--text); }
-        .title { font-weight:700; font-size:16px; }
-        .spacer { flex:1; }
-        .badge { font-size:10px; padding:4px 10px; border-radius:12px; background:var(--surface); color:var(--text2); }
-        .badge.running { background:#a6e3a122; color:var(--green); }
-        .badge.error { background:#f38ba822; color:var(--red); }
-        
-        /* Device Selector */
-        .device-tabs { display:flex; gap:6px; padding:8px 14px; background:var(--bg); border-bottom:1px solid var(--border); overflow-x:auto; }
-        .device-tab {
-            padding:8px 16px; border-radius:20px; border:1px solid var(--border);
-            background:transparent; color:var(--text2); cursor:pointer;
-            font-size:12px; white-space:nowrap; transition:.2s;
-        }
-        .device-tab.active { background:var(--accent); color:#1e1e2e; border-color:var(--accent); }
-        
-        /* Main Preview Area */
-        .preview-area { flex:1; display:flex; align-items:center; justify-content:center; padding:16px; overflow:auto; }
         .device-frame {
-            border:4px solid var(--surface); border-radius:28px; overflow:hidden;
-            background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.4); transition:.3s;
-            position:relative;
+            border: 4px solid var(--border); border-radius: 28px; overflow: hidden;
+            background: #fff; transition: all 0.3s ease; position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
-        .device-frame.mobile { width:390px; height:750px; }
-        .device-frame.tablet { width:768px; height:900px; }
-        .device-frame.desktop { width:100%; height:100%; border-radius:8px; border:2px solid var(--border); }
+        .device-frame.mobile { width: 390px; height: 700px; }
+        .device-frame.tablet { width: 768px; height: 850px; }
+        .device-frame.desktop { width: 100%; height: 550px; border-radius: 12px; border-width: 2px; }
         .device-notch {
-            position:absolute; top:0; left:50%; transform:translateX(-50%);
-            width:120px; height:28px; background:#111; border-radius:0 0 16px 16px;
-            z-index:10; display:none;
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 30px; background: #111; border-radius: 0 0 18px 18px;
+            z-index: 10; display: none;
         }
-        .device-frame.mobile .device-notch { display:block; }
-        .device-frame iframe { width:100%; height:100%; border:none; }
+        .device-frame.mobile .device-notch { display: block; }
+        .device-frame iframe { width: 100%; height: 100%; border: none; }
         
-        /* Controls */
-        .controls {
-            display:flex; gap:8px; padding:10px 14px; background:var(--bg2);
-            border-top:1px solid var(--border); flex-shrink:0; align-items:center;
-            flex-wrap:wrap;
+        /* Device Tabs */
+        .device-tabs { display: flex; gap: 8px; margin-bottom: var(--space-md); flex-wrap: wrap; }
+        .device-tab {
+            padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim); cursor: pointer;
+            font-size: 13px; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
         }
-        .btn {
-            padding:10px 18px; border-radius:8px; border:none; cursor:pointer;
-            font-size:13px; font-weight:500; transition:.2s; display:flex; align-items:center; gap:6px;
-        }
-        .btn-run { background:var(--green); color:#1e1e2e; }
-        .btn-run:hover { opacity:.85; }
-        .btn-stop { background:var(--red); color:#fff; }
-        .btn-refresh { background:var(--surface); color:var(--text); }
-        .btn-expand { background:var(--surface); color:var(--text); }
-        .btn-edit { background:var(--accent); color:#1e1e2e; text-decoration:none; }
+        .device-tab:hover { border-color: var(--accent); color: var(--text); }
+        .device-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         
         /* Console */
         .console-area {
-            height:180px; background:#11111b; border-top:1px solid var(--border);
-            overflow-y:auto; padding:10px; font-family:'JetBrains Mono',monospace;
-            font-size:12px; flex-shrink:0; display:none;
+            background: #0a0a0f; border: 1px solid var(--border); border-radius: var(--radius);
+            margin-top: var(--space-md); overflow: hidden;
         }
-        .console-area.open { display:block; }
-        .console-entry { padding:3px 0; display:flex; gap:8px; }
-        .console-time { color:var(--text2); font-size:10px; flex-shrink:0; }
-        .console-log { color:var(--text2); }
-        .console-error { color:var(--red); }
-        .console-warn { color:var(--yellow); }
-        .console-info { color:var(--accent); }
+        .console-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 14px; background: var(--bg-card); border-bottom: 1px solid var(--border);
+            font-size: 12px; font-weight: 600;
+        }
+        .console-output {
+            height: 180px; overflow-y: auto; padding: 10px;
+            font-family: var(--font-mono); font-size: 12px; line-height: 1.6;
+        }
+        .console-entry { padding: 2px 0; display: flex; gap: 10px; }
+        .console-time { color: var(--text-dim); font-size: 10px; flex-shrink: 0; width: 50px; }
+        .console-log { color: var(--text); }
+        .console-error { color: var(--red); }
+        .console-warn { color: var(--orange); }
+        .console-info { color: var(--accent); }
+        .console-success { color: var(--green); }
         
         /* Source Tabs */
-        .source-tabs { display:flex; gap:4px; padding:6px 14px; background:var(--bg2); border-bottom:1px solid var(--border); overflow-x:auto; }
+        .source-tabs { display: flex; gap: 4px; margin-bottom: var(--space-md); flex-wrap: wrap; }
         .source-tab {
-            padding:6px 12px; border-radius:6px 6px 0 0; border:1px solid transparent;
-            background:transparent; color:var(--text2); cursor:pointer; font-size:11px;
-            white-space:nowrap; transition:.2s;
+            padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim); cursor: pointer;
+            font-size: 12px; transition: all 0.15s;
         }
-        .source-tab.active { background:var(--bg); border-color:var(--border); border-bottom-color:var(--bg); color:var(--text); }
+        .source-tab:hover { border-color: var(--accent); color: var(--text); }
+        .source-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         
-        /* Responsive */
+        /* Status bar */
+        .status-bar {
+            display: flex; align-items: center; gap: 12px; padding: 8px 14px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            margin-bottom: var(--space-md); font-size: 12px;
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .status-dot.running { background: var(--green); animation: pulse 1.5s infinite; }
+        .status-dot.stopped { background: var(--text-dim); }
+        .status-dot.error { background: var(--red); }
+        
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        
         @media (max-width:600px) {
-            .device-frame.mobile { width:100%; height:550px; border-radius:20px; }
-            .device-frame.tablet { width:100%; height:400px; }
-            .console-area { height:140px; }
+            .device-frame.mobile { width: 100%; height: 500px; }
+            .device-frame.tablet { width: 100%; height: 400px; }
+            .console-output { height: 140px; }
         }
     </style>
 </head>
 <body>
-    <div class="app">
-        <!-- Top Bar -->
-        <div class="topbar">
-            <a href="home.html" class="back-btn">🏠</a>
-            <a href="index.html" class="back-btn">← Editor</a>
-            <div class="title">▶ Run & Preview</div>
-            <div class="spacer"></div>
-            <div class="badge" id="run-status">⚪ Ready</div>
-            <button class="btn btn-refresh" onclick="refreshPreview()">🔄</button>
-            <button class="btn btn-expand" onclick="toggleFullscreen()">⛶</button>
-        </div>
+    <!-- ============ MAIN CONTAINER ============ -->
+    <div class="container">
         
-        <!-- Device Selector -->
+        <!-- ============ PAGE HEADER ============ -->
+        <header class="page-header">
+            <a href="home.html" class="back-btn">🏠 Home</a>
+            <a href="index.html" class="back-btn">← Editor</a>
+            <h1 class="page-title">▶ Run & Preview</h1>
+            <span class="badge badge-success" id="run-badge" style="margin-left:auto;">● Ready</span>
+        </header>
+
+        <!-- ============ DEVICE SELECTOR ============ -->
         <div class="device-tabs">
-            <button class="device-tab active" onclick="setDevice('pixel7', this)">📱 Pixel 7</button>
-            <button class="device-tab" onclick="setDevice('pixel6', this)">📱 Pixel 6</button>
-            <button class="device-tab" onclick="setDevice('tablet', this)">📱 Tablet</button>
+            <button class="device-tab active" onclick="setDevice('mobile', this)">📱 Pixel 7</button>
+            <button class="device-tab" onclick="setDevice('tablet', this)">📱 Pixel Tablet</button>
             <button class="device-tab" onclick="setDevice('desktop', this)">💻 Desktop</button>
         </div>
-        
-        <!-- Source Tabs -->
-        <div class="source-tabs" id="source-tabs">
-            <button class="source-tab active" data-file="index.html" onclick="switchSource('index.html', this)">🌐 index.html</button>
-            <button class="source-tab" data-file="styles.css" onclick="switchSource('styles.css', this)">🎨 styles.css</button>
-            <button class="source-tab" data-file="script.js" onclick="switchSource('script.js', this)">📜 script.js</button>
+
+        <!-- ============ SOURCE TABS ============ -->
+        <div class="source-tabs">
+            <button class="source-tab active" data-source="index.html">🌐 index.html</button>
+            <button class="source-tab" data-source="styles.css">🎨 styles.css</button>
+            <button class="source-tab" data-source="script.js">📜 script.js</button>
+            <button class="source-tab" data-source="combined">📦 Combined</button>
         </div>
-        
-        <!-- Preview -->
+
+        <!-- ============ STATUS BAR ============ -->
+        <div class="status-bar">
+            <span class="status-dot running" id="status-dot"></span>
+            <span id="status-text">App running</span>
+            <span style="margin-left:auto;color:var(--text-dim);" id="status-time">Just now</span>
+        </div>
+
+        <!-- ============ PREVIEW AREA ============ -->
         <div class="preview-area">
             <div class="device-frame mobile" id="device-frame">
                 <div class="device-notch"></div>
-                <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals"></iframe>
+                <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
             </div>
         </div>
-        
-        <!-- Console -->
-        <div class="console-area open" id="console-area">
-            <div id="console-output">
-                <div class="console-entry"><span class="console-time">00:00</span><span class="console-info">Run preview ready</span></div>
-            </div>
+
+        <!-- ============ CONTROLS ============ -->
+        <div style="display:flex;gap:8px;margin-top:var(--space-md);flex-wrap:wrap;">
+            <button class="btn btn-success" onclick="runPreview()">▶ Run</button>
+            <button class="btn btn-danger btn-sm" onclick="stopPreview()">⏹ Stop</button>
+            <button class="btn btn-sm" onclick="refreshPreview()">🔄 Refresh</button>
+            <button class="btn btn-sm" onclick="openInNewTab()">🔗 Open in Tab</button>
+            <button class="btn btn-sm" onclick="clearConsole()">🗑 Clear Console</button>
+            <button class="btn btn-sm" onclick="toggleConsole()">📋 Toggle Console</button>
+            <a href="index.html" class="btn btn-primary" style="margin-left:auto;">✏️ Edit Code</a>
         </div>
-        
-        <!-- Controls -->
-        <div class="controls">
-            <button class="btn btn-run" onclick="runPreview()">▶ Run</button>
-            <button class="btn btn-stop" onclick="stopPreview()">⏹ Stop</button>
-            <button class="btn btn-refresh" onclick="refreshPreview()">🔄 Refresh</button>
-            <button class="btn btn-refresh" onclick="toggleConsole()">📋 Console</button>
-            <div class="spacer"></div>
-            <a href="index.html" class="btn btn-edit">✏️ Edit Code</a>
+
+        <!-- ============ CONSOLE ============ -->
+        <div class="console-area" id="console-area">
+            <div class="console-header">
+                <span>📋 Console Output</span>
+                <span style="font-size:10px;color:var(--text-dim);" id="console-count">0 entries</span>
+            </div>
+            <div class="console-output" id="console-output">
+                <div class="console-entry">
+                    <span class="console-time">--:--</span>
+                    <span class="console-info">▶ Preview ready. Click Run to start.</span>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- ============ BOTTOM NAVIGATION ============ -->
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
+        <a href="index.html" class="nav-item"><span class="nav-icon">✏️</span>Editor</a>
+        <a href="run.html" class="nav-item active"><span class="nav-icon">▶</span>Run</a>
+        <a href="terminal/terminal.html" class="nav-item"><span class="nav-icon">⬛</span>Terminal</a>
+        <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
+    </nav>
+
+    <!-- ============ TOAST ============ -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ============ SCRIPTS ============ -->
     <script>
-    // ==================== STATE ====================
-    const state = {
-        device: 'pixel7',
-        currentSource: 'index.html',
-        isRunning: false,
-        consoleEntries: [],
-        sources: {
-            'index.html': `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My App</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <h1>🚀 Hello NexusCode!</h1>
-        <p>Your app is running</p>
-        <button onclick="handleClick()">Click Me</button>
-        <div id="output"></div>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>`,
-            'styles.css': `* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-.container {
-    text-align: center;
-    padding: 40px;
-}
-h1 {
-    font-size: 2.5em;
-    margin-bottom: 16px;
-    animation: slideIn 0.6s ease;
-}
-p {
-    font-size: 1.2em;
-    opacity: 0.9;
-    margin-bottom: 24px;
-}
-button {
-    padding: 14px 32px;
-    background: white;
-    color: #667eea;
-    border: none;
-    border-radius: 30px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
-button:active { transform: scale(0.95); }
-#output {
-    margin-top: 20px;
-    padding: 16px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 12px;
-    min-height: 40px;
-}
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}`,
-            'script.js': `console.log('App started!');
-console.log('Device: ' + navigator.userAgent);
+        // ===== STATE =====
+        const state = {
+            device: 'mobile',
+            isRunning: false,
+            consoleEntries: [],
+            currentSource: 'combined',
+            sources: {
+                'index.html': '',
+                'styles.css': '',
+                'script.js': ''
+            }
+        };
 
-let clickCount = 0;
-
-function handleClick() {
-    clickCount++;
-    const output = document.getElementById('output');
-    output.innerHTML = 'Clicked <strong>' + clickCount + '</strong> time' + (clickCount > 1 ? 's' : '') + '! 🎉';
-    output.style.animation = 'none';
-    output.offsetHeight;
-    output.style.animation = 'slideIn 0.4s ease';
-    
-    console.log('Button clicked: ' + clickCount);
-    
-    // Notify parent
-    window.parent.postMessage({
-        type: 'nexuscode-log',
-        level: 'info',
-        message: 'Button clicked: ' + clickCount
-    }, '*');
-}
-
-// Listen for messages from parent
-window.addEventListener('message', function(e) {
-    if (e.data?.type === 'nexuscode-refresh') {
-        location.reload();
-    }
-});`
+        // ===== INIT =====
+        function init() {
+            loadSourcesFromStorage();
+            updateSourceTabs();
+            addConsole('info', '▶ Preview ready. Click Run to start.');
+            runPreview(); // Auto-run
         }
-    };
 
-    // ==================== INITIALIZATION ====================
-    function init() {
-        // Load saved sources from editor if available
-        loadFromEditor();
-        
-        // Build preview
-        runPreview();
-        
-        // Listen for messages from iframe
+        // ===== SOURCES =====
+        function loadSourcesFromStorage() {
+            try {
+                const files = JSON.parse(localStorage.getItem('nexuscode_files') || '[]');
+                const html = files.find(f => f.name === 'index.html' || f.name?.endsWith('.html'));
+                const css = files.find(f => f.name === 'styles.css' || f.name?.endsWith('.css'));
+                const js = files.find(f => f.name === 'script.js' || f.name?.endsWith('.js'));
+
+                state.sources['index.html'] = html?.content || getDefaultHTML();
+                state.sources['styles.css'] = css?.content || getDefaultCSS();
+                state.sources['script.js'] = js?.content || getDefaultJS();
+            } catch(e) {
+                state.sources['index.html'] = getDefaultHTML();
+                state.sources['styles.css'] = getDefaultCSS();
+                state.sources['script.js'] = getDefaultJS();
+            }
+        }
+
+        function getDefaultHTML() {
+            return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>My App</title>\n    <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n    <div class="container">\n        <h1>🚀 Hello NexusCode!</h1>\n        <p>Your app is running</p>\n        <button onclick="handleClick()">Click Me</button>\n        <div id="output"></div>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>';
+        }
+
+        function getDefaultCSS() {
+            return '* { margin:0; padding:0; box-sizing:border-box; }\nbody {\n    font-family: "Inter", system-ui, sans-serif;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    min-height: 100vh;\n    background: linear-gradient(135deg, #667eea, #764ba2);\n    color: white;\n}\n.container { text-align:center; padding:40px; }\nh1 { font-size:2.5em; margin-bottom:16px; }\np { font-size:1.2em; opacity:0.9; margin-bottom:24px; }\nbutton {\n    padding:14px 32px; background:white; color:#667eea;\n    border:none; border-radius:30px; font-size:16px; font-weight:600;\n    cursor:pointer; transition:transform 0.2s;\n}\nbutton:hover { transform:scale(1.05); }\n#output { margin-top:20px; padding:16px; background:rgba(255,255,255,0.15); border-radius:12px; }';
+        }
+
+        function getDefaultJS() {
+            return 'console.log("App started!");\nconsole.log("Device: " + navigator.userAgent);\n\nlet clickCount = 0;\n\nfunction handleClick() {\n    clickCount++;\n    const output = document.getElementById("output");\n    output.innerHTML = "Clicked <strong>" + clickCount + "</strong> time" + (clickCount > 1 ? "s" : "") + "! 🎉";\n    console.log("Button clicked: " + clickCount);\n}';
+        }
+
+        function updateSourceTabs() {
+            document.querySelectorAll('.source-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    state.currentSource = this.dataset.source;
+                    if (state.isRunning) runPreview();
+                });
+            });
+        }
+
+        // ===== BUILD & RUN =====
+        function buildPreview() {
+            if (state.currentSource === 'combined') {
+                let html = state.sources['index.html'] || getDefaultHTML();
+                const css = state.sources['styles.css'];
+                const js = state.sources['script.js'];
+
+                if (css) html = html.replace('</head>', `<style>\n${css}\n</style></head>`);
+                if (js) {
+                    const wrappedJS = `<script>\n// Console capture for parent\n(function(){\n    var _log=console.log,_err=console.error,_warn=console.warn;\n    console.log=function(){_log.apply(console,arguments);window.parent.postMessage({type:'log',level:'info',msg:Array.from(arguments).join(' ')},'*');};\n    console.error=function(){_err.apply(console,arguments);window.parent.postMessage({type:'log',level:'error',msg:Array.from(arguments).join(' ')},'*');};\n    console.warn=function(){_warn.apply(console,arguments);window.parent.postMessage({type:'log',level:'warn',msg:Array.from(arguments).join(' ')},'*');};\n    window.onerror=function(m,s,l){window.parent.postMessage({type:'log',level:'error',msg:'Line '+l+': '+m},'*');};\n})();\n${js}\n</script>`;
+                    html = html.replace('</body>', wrappedJS + '</body>');
+                }
+                return html;
+            } else {
+                return state.sources[state.currentSource] || '';
+            }
+        }
+
+        function runPreview() {
+            state.isRunning = true;
+            updateStatus('running', '● Running', 'running');
+            
+            const html = buildPreview();
+            const frame = document.getElementById('preview-frame');
+            const blob = new Blob([html], { type: 'text/html' });
+            frame.src = URL.createObjectURL(blob);
+            
+            addConsole('success', '▶ App running on ' + getDeviceName());
+            document.getElementById('run-badge').className = 'badge badge-success';
+            document.getElementById('run-badge').textContent = '● Running';
+        }
+
+        function stopPreview() {
+            state.isRunning = false;
+            updateStatus('stopped', '○ Stopped', 'stopped');
+            document.getElementById('preview-frame').src = 'about:blank';
+            document.getElementById('run-badge').className = 'badge badge-warning';
+            document.getElementById('run-badge').textContent = '○ Stopped';
+            addConsole('warn', '⏹ App stopped');
+        }
+
+        function refreshPreview() {
+            if (state.isRunning) {
+                addConsole('info', '🔄 Refreshing...');
+                runPreview();
+            }
+        }
+
+        function openInNewTab() {
+            const html = buildPreview();
+            const blob = new Blob([html], { type: 'text/html' });
+            window.open(URL.createObjectURL(blob), '_blank');
+            addConsole('info', '🔗 Opened in new tab');
+        }
+
+        // ===== DEVICE =====
+        function setDevice(device, btn) {
+            state.device = device;
+            document.querySelectorAll('.device-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('device-frame').className = 'device-frame ' + device;
+            if (state.isRunning) runPreview();
+            addConsole('info', '📱 Device: ' + getDeviceName());
+        }
+
+        function getDeviceName() {
+            return state.device === 'mobile' ? 'Pixel 7' : state.device === 'tablet' ? 'Pixel Tablet' : 'Desktop';
+        }
+
+        // ===== STATUS =====
+        function updateStatus(dotClass, text, type) {
+            document.getElementById('status-dot').className = 'status-dot ' + type;
+            document.getElementById('status-text').textContent = text;
+            document.getElementById('status-time').textContent = new Date().toLocaleTimeString();
+        }
+
+        // ===== CONSOLE =====
+        function addConsole(level, message) {
+            const time = new Date().toLocaleTimeString();
+            state.consoleEntries.push({ time, level, message });
+            if (state.consoleEntries.length > 200) state.consoleEntries.shift();
+            renderConsole();
+        }
+
+        function renderConsole() {
+            const output = document.getElementById('console-output');
+            output.innerHTML = state.consoleEntries.map(e => `
+                <div class="console-entry">
+                    <span class="console-time">${e.time}</span>
+                    <span class="console-${e.level}">${e.message}</span>
+                </div>
+            `).join('');
+            output.scrollTop = output.scrollHeight;
+            document.getElementById('console-count').textContent = state.consoleEntries.length + ' entries';
+        }
+
+        function clearConsole() {
+            state.consoleEntries = [];
+            renderConsole();
+            addConsole('info', '🗑 Console cleared');
+        }
+
+        function toggleConsole() {
+            const area = document.getElementById('console-area');
+            area.style.display = area.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // ===== MESSAGE LISTENER =====
         window.addEventListener('message', function(e) {
-            if (e.data?.type === 'nexuscode-log') {
-                addConsole(e.data.level || 'info', e.data.message);
+            if (e.data?.type === 'log') {
+                addConsole(e.data.level || 'info', e.data.msg);
             }
         });
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
+
+        // ===== TOAST =====
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg; el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        // ===== KEYBOARD =====
+        document.addEventListener('keydown', (e) => {
             if (e.key === 'F5') { e.preventDefault(); refreshPreview(); }
-            if (e.ctrlKey && e.key === 'r') { e.preventDefault(); runPreview(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') { e.preventDefault(); runPreview(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault(); window.location.href = 'run.html'; }
         });
-        
-        addConsole('info', 'Preview ready - Click Run to start');
-    }
 
-    function loadFromEditor() {
-        try {
-            const saved = localStorage.getItem('nexuscode_preview_sources');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                Object.assign(state.sources, parsed);
-            }
-            const activeSource = localStorage.getItem('nexuscode_active_source');
-            if (activeSource && state.sources[activeSource]) {
-                switchSource(activeSource, document.querySelector(`[data-file="${activeSource}"]`));
-            }
-        } catch(e) {
-            console.log('No saved sources found, using defaults');
-        }
-    }
-
-    // ==================== PREVIEW ====================
-    function buildPreview() {
-        let html = state.sources['index.html'] || '';
-        
-        // Inject CSS inline
-        const css = state.sources['styles.css'] || '';
-        if (css) {
-            html = html.replace('</head>', `<style>${css}</style></head>`);
-        }
-        
-        // Inject JS with console capture
-        const js = state.sources['script.js'] || '';
-        if (js) {
-            const wrappedJs = `
-<script>
-    // Console capture
-    (function() {
-        var _log = console.log;
-        var _error = console.error;
-        var _warn = console.warn;
-        
-        console.log = function() {
-            _log.apply(console, arguments);
-            window.parent.postMessage({
-                type: 'nexuscode-log',
-                level: 'info',
-                message: Array.from(arguments).join(' ')
-            }, '*');
-        };
-        console.error = function() {
-            _error.apply(console, arguments);
-            window.parent.postMessage({
-                type: 'nexuscode-log',
-                level: 'error',
-                message: Array.from(arguments).join(' ')
-            }, '*');
-        };
-        console.warn = function() {
-            _warn.apply(console, arguments);
-            window.parent.postMessage({
-                type: 'nexuscode-log',
-                level: 'warn',
-                message: Array.from(arguments).join(' ')
-            }, '*');
-        };
-        
-        window.onerror = function(msg, url, line) {
-            window.parent.postMessage({
-                type: 'nexuscode-log',
-                level: 'error',
-                message: 'Line ' + line + ': ' + msg
-            }, '*');
-        };
-    })();
-${js}
-</script>`;
-            html = html.replace('</body>', wrappedJs + '</body>');
-        }
-        
-        return html;
-    }
-
-    function runPreview() {
-        state.isRunning = true;
-        updateStatus('running', '🟢 Running');
-        
-        const html = buildPreview();
-        const frame = document.getElementById('preview-frame');
-        const blob = new Blob([html], { type: 'text/html' });
-        frame.src = URL.createObjectURL(blob);
-        
-        addConsole('info', 'App started on ' + state.device);
-        
-        // Save sources
-        saveSources();
-    }
-
-    function stopPreview() {
-        state.isRunning = false;
-        updateStatus('ready', '⚪ Stopped');
-        document.getElementById('preview-frame').src = 'about:blank';
-        addConsole('info', 'App stopped');
-    }
-
-    function refreshPreview() {
-        if (state.isRunning) {
-            runPreview();
-            addConsole('info', 'Preview refreshed');
-        }
-    }
-
-    // ==================== DEVICE ====================
-    function setDevice(device, btn) {
-        state.device = device;
-        document.querySelectorAll('.device-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        const frame = document.getElementById('device-frame');
-        frame.className = 'device-frame ' + (device === 'desktop' ? 'desktop' : device === 'tablet' ? 'tablet' : 'mobile');
-        
-        addConsole('info', 'Device changed: ' + device);
-        if (state.isRunning) refreshPreview();
-    }
-
-    // ==================== SOURCE ====================
-    function switchSource(file, btn) {
-        state.currentSource = file;
-        document.querySelectorAll('.source-tab').forEach(b => b.classList.remove('active'));
-        if (btn) btn.classList.add('active');
-        
-        // Could show source in a split view here
-        addConsole('info', 'Viewing source: ' + file);
-    }
-
-    // ==================== CONSOLE ====================
-    function addConsole(level, message) {
-        const time = new Date().toLocaleTimeString();
-        state.consoleEntries.push({ time, level, message });
-        if (state.consoleEntries.length > 100) state.consoleEntries.shift();
-        renderConsole();
-    }
-
-    function renderConsole() {
-        const container = document.getElementById('console-output');
-        container.innerHTML = state.consoleEntries.map(e => `
-            <div class="console-entry">
-                <span class="console-time">${e.time}</span>
-                <span class="console-${e.level}">${e.message}</span>
-            </div>
-        `).join('');
-        document.getElementById('console-area').scrollTop = document.getElementById('console-area').scrollHeight;
-    }
-
-    function toggleConsole() {
-        document.getElementById('console-area').classList.toggle('open');
-    }
-
-    function clearConsole() {
-        state.consoleEntries = [];
-        renderConsole();
-    }
-
-    // ==================== HELPERS ====================
-    function updateStatus(type, text) {
-        const badge = document.getElementById('run-status');
-        badge.textContent = text;
-        badge.className = 'badge ' + type;
-    }
-
-    function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-            document.exitFullscreen();
-        }
-    }
-
-    function saveSources() {
-        try {
-            localStorage.setItem('nexuscode_preview_sources', JSON.stringify(state.sources));
-            localStorage.setItem('nexuscode_active_source', state.currentSource);
-        } catch(e) {}
-    }
-
-    // Export sources back to editor
-    function exportToEditor() {
-        localStorage.setItem('nexuscode_preview_sources', JSON.stringify(state.sources));
-        addConsole('info', 'Sources exported to editor');
-        window.location.href = 'index.html';
-    }
-
-    // ==================== STARTUP ====================
-    document.addEventListener('DOMContentLoaded', init);
+        // ===== START =====
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
