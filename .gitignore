@@ -49,3 +49,8 @@ android-app/build/
 # Misc
 *.pid
 localStorage.json
+
+# Production data
+data/
+logs/
+*.pid

@@ -1,0 +1,21 @@
+{
+  "name": "nexuscode-studio",
+  "version": "2.0.0",
+  "description": "Production-Grade Browser IDE for Android & Web",
+  "main": "server.prod.js",
+  "scripts": {
+    "start": "node server.prod.js",
+    "dev": "NODE_ENV=development node server.prod.js",
+    "prod": "NODE_ENV=production node server.prod.js",
+    "deploy": "bash deploy.sh",
+    "docker:build": "docker build -t nexuscode .",
+    "docker:run": "docker run -p 8080:8080 nexuscode",
+    "docker:compose": "docker-compose up -d"
+  },
+  "keywords": ["ide", "editor", "android", "webview", "terminal", "pwa"],
+  "author": "dnyf-platform",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
