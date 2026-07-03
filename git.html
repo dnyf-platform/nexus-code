@@ -3,88 +3,628 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1e1e1e">
-    <title>Git - NexusCode</title>
-    <link rel="stylesheet" href="css/themes/dark-theme.css">
+    <meta name="theme-color" content="#1e1e2e">
+    <title>Git Manager - NexusCode</title>
     <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
-        .page { max-width: 700px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
-        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
-        .back-btn:hover { color: var(--text-primary); }
-        .page-title { font-size: 24px; font-weight: 700; }
-        .branch-bar { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .branch-icon { color: #f85149; }
-        .section { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
-        .section h4 { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .file-change { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border-color); }
-        .change-added { color: #3fb950; }
-        .change-modified { color: #d2991d; }
-        .change-deleted { color: #f85149; }
-        .action-btns { display: flex; gap: 8px; margin-top: 12px; }
-        .action-btns button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
-        .btn-commit { background: #3fb950; color: white; }
-        .btn-push { background: var(--accent-primary, #007acc); color: white; }
-        .btn-pull { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
-        .commit-item { padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
-        .commit-hash { color: var(--accent-primary); font-family: monospace; font-size: 12px; }
-        .commit-date { color: var(--text-muted); font-size: 11px; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
-        .nav-item.active { color: var(--accent-primary); }
-        .nav-icon { font-size: 20px; }
+        :root {
+            --bg: #1e1e2e; --bg2: #181825; --bg3: #11111b;
+            --surface: #313244; --surface2: #45475a;
+            --text: #cdd6f4; --text2: #a6adc8; --text3: #6c7086;
+            --accent: #89b4fa; --green: #a6e3a1; --red: #f38ba8;
+            --yellow: #f9e2af; --orange: #fab387; --purple: #cba6f7;
+            --border: #45475a; --radius: 12px; --radius-sm: 8px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { width:100%; height:100%; overflow-x:hidden; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; }
+        .page { max-width:800px; margin:0 auto; padding:20px; padding-top:calc(20px + var(--safe-top)); padding-bottom:calc(80px + var(--safe-bottom)); min-height:100vh; }
+        .topbar { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+        .back-btn { text-decoration:none; color:var(--text2); font-size:18px; padding:8px 12px; border-radius:var(--radius-sm); background:var(--bg2); border:1px solid var(--border); }
+        .back-btn:hover { color:var(--text); background:var(--surface); }
+        .title { font-size:22px; font-weight:700; }
+        .spacer { flex:1; }
+        .btn { padding:8px 16px; border-radius:var(--radius-sm); border:none; cursor:pointer; font-size:12px; font-weight:500; transition:all .2s; }
+        .btn-primary { background:var(--accent); color:#1e1e2e; }
+        .btn-success { background:var(--green); color:#1e1e2e; }
+        .btn-danger { background:var(--red); color:#fff; }
+        .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text2); }
+        .btn-sm { padding:4px 10px; font-size:11px; }
+        
+        /* Branch Bar */
+        .branch-bar { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .branch-icon { font-size:20px; }
+        .branch-name { font-weight:700; font-size:15px; color:var(--accent); }
+        .branch-status { font-size:11px; color:var(--text3); }
+        .branch-actions { display:flex; gap:6px; margin-left:auto; }
+        
+        /* Sections */
+        .section { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; }
+        .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+        .section-title { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text2); }
+        .section-count { font-size:11px; padding:3px 8px; border-radius:10px; background:var(--surface); color:var(--text2); }
+        
+        /* File Changes */
+        .file-change { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; cursor:pointer; transition:.15s; font-size:13px; }
+        .file-change:hover { background:var(--surface); }
+        .change-indicator { width:16px; height:16px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+        .change-added { background:#a6e3a122; color:var(--green); }
+        .change-modified { background:#f9e2af22; color:var(--yellow); }
+        .change-deleted { background:#f38ba822; color:var(--red); }
+        .change-untracked { background:#89b4fa22; color:var(--accent); }
+        .file-path { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'JetBrains Mono',monospace; font-size:12px; }
+        .file-check { width:18px; height:18px; border:2px solid var(--border); border-radius:4px; cursor:pointer; flex-shrink:0; }
+        .file-check.checked { background:var(--accent); border-color:var(--accent); }
+        
+        /* Commit Input */
+        .commit-area { display:flex; gap:8px; margin-top:12px; }
+        .commit-input { flex:1; padding:10px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:13px; outline:none; font-family:inherit; }
+        .commit-input:focus { border-color:var(--accent); }
+        .commit-input::placeholder { color:var(--text3); }
+        
+        /* Commit History */
+        .commit-item { padding:10px 0; border-bottom:1px solid var(--border); }
+        .commit-item:last-child { border-bottom:none; }
+        .commit-hash { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--accent); }
+        .commit-message { font-size:13px; margin:4px 0; }
+        .commit-meta { font-size:10px; color:var(--text3); display:flex; gap:12px; }
+        
+        /* Tabs */
+        .tabs { display:flex; gap:4px; margin-bottom:16px; border-bottom:1px solid var(--border); }
+        .tab { padding:8px 16px; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--text3); cursor:pointer; font-size:13px; transition:.2s; }
+        .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+        
+        /* Remote */
+        .remote-item { display:flex; align-items:center; justify-content:space-between; padding:10px; background:var(--bg3); border-radius:var(--radius-sm); margin-bottom:8px; }
+        .remote-name { font-weight:600; font-size:13px; }
+        .remote-url { font-size:11px; color:var(--text3); font-family:'JetBrains Mono',monospace; }
+        
+        /* Modal */
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:none; align-items:center; justify-content:center; }
+        .modal-overlay.show { display:flex; }
+        .modal { background:var(--bg2); border-radius:var(--radius); width:90%; max-width:450px; border:1px solid var(--border); box-shadow:0 8px 32px rgba(0,0,0,0.5); }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); font-weight:600; }
+        .modal-body { padding:18px; }
+        .modal-body input { width:100%; padding:10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:13px; outline:none; margin-bottom:10px; }
+        .modal-body input:focus { border-color:var(--accent); }
+        .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+        
+        /* Toast */
+        .toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--surface2); color:var(--text); padding:10px 20px; border-radius:20px; font-size:13px; z-index:300; opacity:0; transition:opacity .3s; pointer-events:none; }
+        .toast.show { opacity:1; }
+        
+        .bottom-nav { position:fixed; bottom:0; left:0; right:0; display:flex; justify-content:space-around; padding:8px; padding-bottom:calc(8px + var(--safe-bottom)); background:var(--bg2); border-top:1px solid var(--border); z-index:100; }
+        .nav-item { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 10px; background:none; border:none; color:var(--text3); cursor:pointer; font-size:10px; text-decoration:none; border-radius:6px; min-width:48px; }
+        .nav-item.active { color:var(--accent); }
+        .nav-icon { font-size:20px; }
+        
+        @media (max-width:600px) { .branch-actions { width:100%; margin-top:8px; } }
     </style>
 </head>
 <body>
     <div class="page">
+        <!-- Top Bar -->
         <div class="topbar">
-            <a href="home.html" class="back-btn">← Back</a>
-            <h1 class="page-title">⎇ Git Manager</h1>
+            <a href="home.html" class="back-btn">🏠</a>
+            <a href="index.html" class="back-btn">← Editor</a>
+            <div class="title">⎇ Git Manager</div>
+            <div class="spacer"></div>
+            <button class="btn btn-outline btn-sm" onclick="fetchFromRemote()">↓ Fetch</button>
         </div>
-
+        
+        <!-- Branch Bar -->
         <div class="branch-bar">
             <span class="branch-icon">⎇</span>
-            <strong>main</strong>
-            <span style="color:var(--text-muted);font-size:12px;">• 12 commits • up to date with origin/main</span>
-        </div>
-
-        <div class="section">
-            <h4>📝 Changes (3 files)</h4>
-            <div class="file-change"><span class="change-added">A</span> index.html</div>
-            <div class="file-change"><span class="change-modified">M</span> styles.css</div>
-            <div class="file-change"><span class="change-added">A</span> script.js</div>
-            <div class="action-btns">
-                <button class="btn-commit" onclick="alert('Changes committed!')">✓ Commit</button>
-                <button class="btn-push" onclick="alert('Pushing to remote...')">↑ Push</button>
-                <button class="btn-pull" onclick="alert('Pulling from remote...')">↓ Pull</button>
+            <span class="branch-name" id="current-branch">main</span>
+            <span class="branch-status" id="branch-status">• 3 commits ahead of origin/main</span>
+            <div class="branch-actions">
+                <button class="btn btn-outline btn-sm" onclick="openModal('branch-modal')">🔀 Switch</button>
+                <button class="btn btn-outline btn-sm" onclick="openModal('new-branch-modal')">+ New Branch</button>
             </div>
         </div>
-
-        <div class="section">
-            <h4>📜 Recent Commits</h4>
-            <div class="commit-item">
-                <div><span class="commit-hash">abc1234</span> Update styles and layout</div>
-                <div class="commit-date">2 hours ago • Developer</div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('changes', this)">📝 Changes</button>
+            <button class="tab" onclick="switchTab('history', this)">📜 History</button>
+            <button class="tab" onclick="switchTab('branches', this)">🔀 Branches</button>
+            <button class="tab" onclick="switchTab('remote', this)">☁ Remote</button>
+            <button class="tab" onclick="switchTab('stash', this)">📦 Stash</button>
+        </div>
+        
+        <!-- Changes Panel -->
+        <div id="panel-changes">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Staged Changes</span>
+                    <span class="section-count" id="staged-count">0</span>
+                </div>
+                <div id="staged-files"></div>
             </div>
-            <div class="commit-item">
-                <div><span class="commit-hash">def5678</span> Add JavaScript functionality</div>
-                <div class="commit-date">5 hours ago • Developer</div>
+            
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Unstaged Changes</span>
+                    <span class="section-count" id="unstaged-count">0</span>
+                </div>
+                <div id="unstaged-files">
+                    <div class="file-change">
+                        <span class="change-indicator change-modified">M</span>
+                        <span class="file-path">app/src/main/java/com/nexuscode/MainActivity.java</span>
+                        <button class="btn btn-outline btn-sm" onclick="stageFile('MainActivity.java')">Stage</button>
+                    </div>
+                    <div class="file-change">
+                        <span class="change-indicator change-added">A</span>
+                        <span class="file-path">app/src/main/res/layout/activity_main.xml</span>
+                        <button class="btn btn-outline btn-sm" onclick="stageFile('activity_main.xml')">Stage</button>
+                    </div>
+                    <div class="file-change">
+                        <span class="change-indicator change-untracked">?</span>
+                        <span class="file-path">README.md</span>
+                        <button class="btn btn-outline btn-sm" onclick="stageFile('README.md')">Stage</button>
+                    </div>
+                </div>
             </div>
-            <div class="commit-item">
-                <div><span class="commit-hash">ghi9012</span> Initial project setup</div>
-                <div class="commit-date">1 day ago • Developer</div>
+            
+            <!-- Commit Area -->
+            <div class="section">
+                <div class="section-title" style="margin-bottom:8px;">💬 Commit Changes</div>
+                <div class="commit-area">
+                    <input type="text" class="commit-input" id="commit-message" placeholder="Fix: Update main activity layout..." onkeydown="if(event.key==='Enter')commit()">
+                    <button class="btn btn-success" onclick="commit()">✓ Commit</button>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="btn btn-outline btn-sm" onclick="commitAll()">Commit All</button>
+                    <button class="btn btn-outline btn-sm" onclick="amendCommit()">Amend Last</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Panel -->
+        <div id="panel-history" style="display:none;">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Commit History</span>
+                    <span class="section-count" id="commit-count">12</span>
+                </div>
+                <div id="commit-list">
+                    <div class="commit-item">
+                        <div class="commit-hash">abc1234</div>
+                        <div class="commit-message">✨ Add new dashboard widgets</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 2 hours ago</span><span>⎇ main</span></div>
+                    </div>
+                    <div class="commit-item">
+                        <div class="commit-hash">def5678</div>
+                        <div class="commit-message">🐛 Fix terminal input focus issue</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 5 hours ago</span><span>⎇ main</span></div>
+                    </div>
+                    <div class="commit-item">
+                        <div class="commit-hash">ghi9012</div>
+                        <div class="commit-message">📄 Update documentation and README</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 1 day ago</span><span>⎇ main</span></div>
+                    </div>
+                    <div class="commit-item">
+                        <div class="commit-hash">jkl3456</div>
+                        <div class="commit-message">🔧 Add production server configuration</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 2 days ago</span><span>⎇ main</span></div>
+                    </div>
+                    <div class="commit-item">
+                        <div class="commit-hash">mno7890</div>
+                        <div class="commit-message">Initial project setup</div>
+                        <div class="commit-meta"><span>👤 Developer</span><span>🕐 3 days ago</span><span>⎇ main</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Branches Panel -->
+        <div id="panel-branches" style="display:none;">
+            <div class="section">
+                <div class="section-title" style="margin-bottom:8px;">Local Branches</div>
+                <div id="branch-list">
+                    <div class="file-change" style="background:var(--surface);">
+                        <span class="change-indicator change-added">★</span>
+                        <span class="file-path" style="font-weight:700;color:var(--green);">main</span>
+                        <span style="font-size:10px;color:var(--text3);">Current</span>
+                    </div>
+                    <div class="file-change">
+                        <span class="change-indicator" style="background:var(--surface2);">⎇</span>
+                        <span class="file-path">develop</span>
+                        <button class="btn btn-outline btn-sm" onclick="switchBranch('develop')">Switch</button>
+                    </div>
+                    <div class="file-change">
+                        <span class="change-indicator" style="background:var(--surface2);">⎇</span>
+                        <span class="file-path">feature/new-ui</span>
+                        <button class="btn btn-outline btn-sm" onclick="switchBranch('feature/new-ui')">Switch</button>
+                    </div>
+                    <div class="file-change">
+                        <span class="change-indicator" style="background:var(--surface2);">⎇</span>
+                        <span class="file-path">bugfix/login-fix</span>
+                        <button class="btn btn-outline btn-sm" onclick="switchBranch('bugfix/login-fix')">Switch</button>
+                    </div>
+                </div>
+                <button class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="openModal('new-branch-modal')">+ Create New Branch</button>
+            </div>
+        </div>
+        
+        <!-- Remote Panel -->
+        <div id="panel-remote" style="display:none;">
+            <div class="section">
+                <div class="section-title" style="margin-bottom:8px;">Remote Repository</div>
+                <div class="remote-item">
+                    <div>
+                        <div class="remote-name">origin</div>
+                        <div class="remote-url">https://github.com/dnyf-platform/nexus-code.git</div>
+                    </div>
+                    <span style="font-size:11px;color:var(--green);">✓ Connected</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                    <button class="btn btn-primary" onclick="pushToRemote()">↑ Push</button>
+                    <button class="btn btn-outline" onclick="pullFromRemote()">↓ Pull</button>
+                    <button class="btn btn-outline" onclick="fetchFromRemote()">↓ Fetch</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title" style="margin-bottom:8px;">+ Add Remote</div>
+                <div class="commit-area">
+                    <input type="text" class="commit-input" id="remote-name" placeholder="Remote name (e.g. upstream)">
+                    <input type="text" class="commit-input" id="remote-url" placeholder="Remote URL">
+                    <button class="btn btn-primary btn-sm" onclick="addRemote()">Add</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stash Panel -->
+        <div id="panel-stash" style="display:none;">
+            <div class="section">
+                <div class="section-title" style="margin-bottom:8px;">Stashed Changes</div>
+                <div id="stash-list">
+                    <div class="commit-item">
+                        <div class="commit-message">WIP: Dashboard improvements</div>
+                        <div class="commit-meta"><span>🕐 1 hour ago</span><span>⎇ main</span></div>
+                        <div style="display:flex;gap:6px;margin-top:6px;">
+                            <button class="btn btn-outline btn-sm" onclick="stashPop(0)">Apply</button>
+                            <button class="btn btn-danger btn-sm" onclick="stashDrop(0)">Drop</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="stashSave()">📦 Stash Current Changes</button>
             </div>
         </div>
     </div>
-
+    
+    <!-- Branch Switch Modal -->
+    <div class="modal-overlay" id="branch-modal">
+        <div class="modal">
+            <div class="modal-header">🔀 Switch Branch <button class="btn btn-outline btn-sm" onclick="closeModal('branch-modal')">×</button></div>
+            <div class="modal-body">
+                <input type="text" placeholder="Search branches..." id="branch-search" oninput="filterBranches()">
+                <div id="branch-search-results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- New Branch Modal -->
+    <div class="modal-overlay" id="new-branch-modal">
+        <div class="modal">
+            <div class="modal-header">+ New Branch <button class="btn btn-outline btn-sm" onclick="closeModal('new-branch-modal')">×</button></div>
+            <div class="modal-body">
+                <label style="font-size:12px;color:var(--text2);">Branch Name</label>
+                <input type="text" placeholder="feature/my-feature" id="new-branch-name">
+                <label style="font-size:12px;color:var(--text2);">Create from</label>
+                <select id="new-branch-from" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);margin-bottom:10px;">
+                    <option value="main">main</option>
+                    <option value="develop">develop</option>
+                </select>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="closeModal('new-branch-modal')">Cancel</button>
+                    <button class="btn btn-primary" onclick="createBranch()">Create Branch</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Nav -->
     <nav class="bottom-nav">
         <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
-        <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
         <a href="index.html" class="nav-item"><span class="nav-icon">✏️</span>Editor</a>
         <a href="terminal/terminal.html" class="nav-item"><span class="nav-icon">⬛</span>Terminal</a>
+        <a href="git.html" class="nav-item active"><span class="nav-icon">⎇</span>Git</a>
         <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+    
+    <script>
+    // ==================== GIT STATE ====================
+    const gitState = {
+        currentBranch: 'main',
+        branches: ['main', 'develop', 'feature/new-ui', 'bugfix/login-fix'],
+        staged: [],
+        unstaged: [
+            { file: 'MainActivity.java', status: 'modified', path: 'app/src/main/java/com/nexuscode/MainActivity.java' },
+            { file: 'activity_main.xml', status: 'added', path: 'app/src/main/res/layout/activity_main.xml' },
+            { file: 'README.md', status: 'untracked', path: 'README.md' }
+        ],
+        commits: [
+            { hash: 'abc1234', message: '✨ Add new dashboard widgets', author: 'Developer', time: '2 hours ago', branch: 'main' },
+            { hash: 'def5678', message: '🐛 Fix terminal input focus issue', author: 'Developer', time: '5 hours ago', branch: 'main' },
+            { hash: 'ghi9012', message: '📄 Update documentation and README', author: 'Developer', time: '1 day ago', branch: 'main' },
+            { hash: 'jkl3456', message: '🔧 Add production server configuration', author: 'Developer', time: '2 days ago', branch: 'main' },
+            { hash: 'mno7890', message: 'Initial project setup', author: 'Developer', time: '3 days ago', branch: 'main' }
+        ],
+        stashes: [
+            { message: 'WIP: Dashboard improvements', time: '1 hour ago', branch: 'main' }
+        ],
+        remote: { name: 'origin', url: 'https://github.com/dnyf-platform/nexus-code.git' }
+    };
+    
+    // ==================== UI FUNCTIONS ====================
+    function switchTab(tab, btn) {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('[id^="panel-"]').forEach(p => p.style.display = 'none');
+        document.getElementById('panel-' + tab).style.display = 'block';
+    }
+    
+    function openModal(id) {
+        document.getElementById(id).classList.add('show');
+        if (id === 'branch-modal') renderBranchSearch();
+    }
+    
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('show');
+    }
+    
+    function toast(msg, type = 'info') {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.style.background = type === 'success' ? 'var(--green)' : type === 'error' ? 'var(--red)' : 'var(--surface2)';
+        el.style.color = type === 'success' || type === 'error' ? '#1e1e2e' : 'var(--text)';
+        el.classList.add('show');
+        clearTimeout(el._t);
+        el._t = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+    
+    // ==================== GIT OPERATIONS ====================
+    function stageFile(file) {
+        const idx = gitState.unstaged.findIndex(f => f.file === file);
+        if (idx > -1) {
+            const staged = gitState.unstaged.splice(idx, 1)[0];
+            gitState.staged.push(staged);
+            renderChanges();
+            toast('Staged: ' + file, 'success');
+        }
+    }
+    
+    function unstageFile(file) {
+        const idx = gitState.staged.findIndex(f => f.file === file);
+        if (idx > -1) {
+            const unstaged = gitState.staged.splice(idx, 1)[0];
+            gitState.unstaged.push(unstaged);
+            renderChanges();
+            toast('Unstaged: ' + file);
+        }
+    }
+    
+    function commit() {
+        const msg = document.getElementById('commit-message').value.trim();
+        if (!msg) { toast('Enter a commit message', 'error'); return; }
+        if (gitState.staged.length === 0) { toast('No staged changes', 'error'); return; }
+        
+        const hash = Math.random().toString(16).substring(2, 10);
+        gitState.commits.unshift({
+            hash, message: msg, author: 'Developer',
+            time: 'Just now', branch: gitState.currentBranch
+        });
+        gitState.staged = [];
+        document.getElementById('commit-message').value = '';
+        document.getElementById('commit-count').textContent = gitState.commits.length;
+        renderChanges();
+        renderHistory();
+        toast('✓ Committed: ' + msg, 'success');
+        saveState();
+    }
+    
+    function commitAll() {
+        gitState.staged = [...gitState.staged, ...gitState.unstaged];
+        gitState.unstaged = [];
+        renderChanges();
+        document.getElementById('commit-message').focus();
+        toast('All files staged');
+    }
+    
+    function amendCommit() {
+        if (gitState.commits.length === 0) return;
+        toast('Amending last commit...', 'success');
+    }
+    
+    function switchBranch(branch) {
+        gitState.currentBranch = branch;
+        document.getElementById('current-branch').textContent = branch;
+        document.getElementById('branch-status').textContent = '• Up to date with origin/' + branch;
+        closeModal('branch-modal');
+        toast('Switched to: ' + branch, 'success');
+        saveState();
+    }
+    
+    function createBranch() {
+        const name = document.getElementById('new-branch-name').value.trim();
+        if (!name) { toast('Enter branch name', 'error'); return; }
+        gitState.branches.push(name);
+        gitState.currentBranch = name;
+        document.getElementById('current-branch').textContent = name;
+        closeModal('new-branch-modal');
+        document.getElementById('new-branch-name').value = '';
+        renderBranches();
+        toast('Created branch: ' + name, 'success');
+        saveState();
+    }
+    
+    function pushToRemote() {
+        toast('↑ Pushing to ' + gitState.remote.name + '/' + gitState.currentBranch + '...', 'success');
+        setTimeout(() => {
+            document.getElementById('branch-status').textContent = '• Up to date with ' + gitState.remote.name + '/' + gitState.currentBranch;
+            toast('✓ Push successful!', 'success');
+        }, 1500);
+    }
+    
+    function pullFromRemote() {
+        toast('↓ Pulling from ' + gitState.remote.name + '...');
+        setTimeout(() => toast('✓ Pull successful!', 'success'), 1500);
+    }
+    
+    function fetchFromRemote() {
+        toast('↓ Fetching...');
+        setTimeout(() => toast('✓ Fetch complete', 'success'), 1000);
+    }
+    
+    function addRemote() {
+        const name = document.getElementById('remote-name').value.trim();
+        const url = document.getElementById('remote-url').value.trim();
+        if (!name || !url) { toast('Fill in both fields', 'error'); return; }
+        gitState.remote = { name, url };
+        renderRemote();
+        toast('Remote added: ' + name, 'success');
+    }
+    
+    function stashSave() {
+        gitState.stashes.unshift({
+            message: 'WIP: ' + new Date().toLocaleString(),
+            time: 'Just now',
+            branch: gitState.currentBranch
+        });
+        renderStash();
+        toast('📦 Changes stashed', 'success');
+    }
+    
+    function stashPop(index) {
+        gitState.stashes.splice(index, 1);
+        renderStash();
+        toast('Stash applied', 'success');
+    }
+    
+    function stashDrop(index) {
+        gitState.stashes.splice(index, 1);
+        renderStash();
+        toast('Stash dropped');
+    }
+    
+    // ==================== RENDER FUNCTIONS ====================
+    function renderChanges() {
+        document.getElementById('staged-count').textContent = gitState.staged.length;
+        document.getElementById('unstaged-count').textContent = gitState.unstaged.length;
+        
+        document.getElementById('staged-files').innerHTML = gitState.staged.map(f => `
+            <div class="file-change">
+                <span class="change-indicator change-${f.status}">${f.status === 'modified' ? 'M' : f.status === 'added' ? 'A' : '?'}</span>
+                <span class="file-path">${f.path}</span>
+                <button class="btn btn-outline btn-sm" onclick="unstageFile('${f.file}')">Unstage</button>
+            </div>
+        `).join('') || '<div style="color:var(--text3);padding:10px;font-size:12px;">No staged changes</div>';
+        
+        document.getElementById('unstaged-files').innerHTML = gitState.unstaged.map(f => `
+            <div class="file-change">
+                <span class="change-indicator change-${f.status}">${f.status === 'modified' ? 'M' : f.status === 'added' ? 'A' : '?'}</span>
+                <span class="file-path">${f.path}</span>
+                <button class="btn btn-outline btn-sm" onclick="stageFile('${f.file}')">Stage</button>
+            </div>
+        `).join('') || '<div style="color:var(--text3);padding:10px;font-size:12px;">No changes</div>';
+    }
+    
+    function renderHistory() {
+        document.getElementById('commit-list').innerHTML = gitState.commits.map(c => `
+            <div class="commit-item">
+                <div class="commit-hash">${c.hash}</div>
+                <div class="commit-message">${c.message}</div>
+                <div class="commit-meta"><span>👤 ${c.author}</span><span>🕐 ${c.time}</span><span>⎇ ${c.branch}</span></div>
+            </div>
+        `).join('');
+    }
+    
+    function renderBranches() {
+        document.getElementById('branch-list').innerHTML = gitState.branches.map(b => `
+            <div class="file-change" ${b === gitState.currentBranch ? 'style="background:var(--surface);"' : ''}>
+                <span class="change-indicator" style="background:${b === gitState.currentBranch ? 'var(--green)' : 'var(--surface2)'};">${b === gitState.currentBranch ? '★' : '⎇'}</span>
+                <span class="file-path" style="${b === gitState.currentBranch ? 'font-weight:700;color:var(--green);' : ''}">${b}</span>
+                ${b === gitState.currentBranch ? '<span style="font-size:10px;color:var(--text3);">Current</span>' : `<button class="btn btn-outline btn-sm" onclick="switchBranch('${b}')">Switch</button>`}
+            </div>
+        `).join('');
+    }
+    
+    function renderRemote() {
+        document.getElementById('panel-remote').querySelector('.remote-item').innerHTML = `
+            <div>
+                <div class="remote-name">${gitState.remote.name}</div>
+                <div class="remote-url">${gitState.remote.url}</div>
+            </div>
+            <span style="font-size:11px;color:var(--green);">✓ Connected</span>
+        `;
+    }
+    
+    function renderStash() {
+        document.getElementById('stash-list').innerHTML = gitState.stashes.length > 0 ? gitState.stashes.map((s, i) => `
+            <div class="commit-item">
+                <div class="commit-message">${s.message}</div>
+                <div class="commit-meta"><span>🕐 ${s.time}</span><span>⎇ ${s.branch}</span></div>
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                    <button class="btn btn-outline btn-sm" onclick="stashPop(${i})">Apply</button>
+                    <button class="btn btn-danger btn-sm" onclick="stashDrop(${i})">Drop</button>
+                </div>
+            </div>
+        `).join('') : '<div style="color:var(--text3);padding:10px;font-size:12px;">No stashed changes</div>';
+    }
+    
+    function renderBranchSearch(filter = '') {
+        const branches = filter ? gitState.branches.filter(b => b.includes(filter)) : gitState.branches;
+        document.getElementById('branch-search-results').innerHTML = branches.map(b => `
+            <div class="file-change" onclick="switchBranch('${b}')" style="cursor:pointer;">
+                <span class="change-indicator" style="background:${b === gitState.currentBranch ? 'var(--green)' : 'var(--surface2)'};">${b === gitState.currentBranch ? '★' : '⎇'}</span>
+                <span class="file-path">${b}</span>
+                ${b === gitState.currentBranch ? '<span style="font-size:10px;color:var(--green);">Current</span>' : ''}
+            </div>
+        `).join('');
+    }
+    
+    function filterBranches() {
+        renderBranchSearch(document.getElementById('branch-search').value);
+    }
+    
+    function saveState() {
+        try { localStorage.setItem('nexuscode_git_state', JSON.stringify(gitState)); } catch(e) {}
+    }
+    
+    function loadState() {
+        try {
+            const saved = localStorage.getItem('nexuscode_git_state');
+            if (saved) Object.assign(gitState, JSON.parse(saved));
+        } catch(e) {}
+    }
+    
+    // Close modals on overlay click
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-overlay')) {
+            e.target.classList.remove('show');
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            commit();
+        }
+    });
+    
+    // Init
+    loadState();
+    renderChanges();
+    renderHistory();
+    renderBranches();
+    renderStash();
+    document.getElementById('current-branch').textContent = gitState.currentBranch;
+    document.getElementById('commit-count').textContent = gitState.commits.length;
+</script>
 </body>
 </html>

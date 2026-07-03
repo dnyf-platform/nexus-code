@@ -393,7 +393,7 @@
             <nav id="activity-bar">
                 <button class="activity-btn active" data-view="project" onclick="switchActivity('project', this)">📁</button>
                 <button class="activity-btn" data-view="search" onclick="switchActivity('search', this)">🔍</button>
-                <button class="activity-btn" data-view="git" onclick="switchActivity('git', this)">⎇</button>
+                <button class="activity-btn" data-view="git" onclick="window.location.href='git.html'">⎇</button>
                 <button class="activity-btn" data-view="run" onclick="switchActivity('run', this)">▶</button>
                 <div class="activity-spacer"></div>
                 <button class="activity-btn" data-view="extensions" onclick="switchActivity('extensions', this)">🧩</button>
@@ -497,7 +497,7 @@
             <button class="bottombar-btn" onclick="bottomNav('logcat', this)">
                 <span class="ico">📋</span> Logcat
             </button>
-            <button class="bottombar-btn" onclick="bottomNav('git', this)">
+            <button class="bottombar-btn" onclick="window.location.href='git.html'">
                 <span class="ico">⎇</span> Git
             </button>
         </nav>
