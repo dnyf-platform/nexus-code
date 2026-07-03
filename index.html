@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1e1e2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>NexusCode Studio - Android IDE</title>
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        :root {
+            --bg: #1e1e2e;
+            --bg2: #181825;
+            --bg3: #11111b;
+            --surface: #313244;
+            --surface2: #45475a;
+            --text: #cdd6f4;
+            --text2: #a6adc8;
+            --text3: #6c7086;
+            --accent: #89b4fa;
+            --accent2: #74c7ec;
+            --green: #a6e3a1;
+            --yellow: #f9e2af;
+            --red: #f38ba8;
+            --orange: #fab387;
+            --purple: #cba6f7;
+            --border: #45475a;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --font: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+            --font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            --topbar-h: 48px;
+            --bottombar-h: 56px;
+            --sidebar-w: 280px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        [data-theme="light"] {
+            --bg: #eff1f5;
+            --bg2: #e6e9ef;
+            --bg3: #dce0e8;
+            --surface: #ccd0da;
+            --surface2: #bcc0cc;
+            --text: #4c4f69;
+            --text2: #5c5f77;
+            --text3: #9ca0b0;
+            --border: #ccd0da;
+            --shadow: 0 4px 24px rgba(0,0,0,0.1);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: var(--font-ui);
+            background: var(--bg);
+            color: var(--text);
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+            position: fixed;
+            top: 0; left: 0;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100dvh;
+            height: -webkit-fill-available;
+            overflow: hidden;
+        }
+
+        /* ============ TOP BAR ============ */
+        #topbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: var(--topbar-h);
+            padding: 0 12px;
+            padding-top: var(--safe-top);
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+        #topbar .logo { font-weight:700; font-size:15px; color:var(--accent); letter-spacing:-0.5px; }
+        #topbar .logo span { color: var(--text2); font-weight:400; }
+        #topbar .spacer { flex:1; }
+        #topbar .device-indicator {
+            font-size: 11px; padding: 4px 10px; border-radius: 20px;
+            background: var(--surface); color: var(--text2);
+        }
+        .icon-btn {
+            width: 36px; height: 36px; border-radius: var(--radius-sm);
+            border: none; background: transparent; color: var(--text2);
+            font-size: 18px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: var(--transition);
+        }
+        .icon-btn:hover, .icon-btn.active { background: var(--surface); color: var(--text); }
+        .icon-btn.primary { background: var(--accent); color: #1e1e2e; }
+        .icon-btn.primary:hover { opacity: 0.85; }
+        .home-link {
+            text-decoration: none; color: var(--text2); font-size: 18px;
+            padding: 6px 8px; border-radius: var(--radius-sm); transition: var(--transition);
+        }
+        .home-link:hover { background: var(--surface); color: var(--text); }
+
+        /* ============ MAIN LAYOUT ============ */
+        #main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ============ ACTIVITY BAR ============ */
+        #activity-bar {
+            width: 48px;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .activity-btn {
+            width: 40px; height: 40px; border-radius: var(--radius-sm);
+            border: none; background: transparent; color: var(--text3);
+            font-size: 20px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: var(--transition); position: relative;
+        }
+        .activity-btn:hover { color: var(--text); background: var(--surface); }
+        .activity-btn.active { color: var(--accent); }
+        .activity-btn.active::before {
+            content: ''; position: absolute; left: -8px; width: 3px; height: 20px;
+            background: var(--accent); border-radius: 0 3px 3px 0;
+        }
+        .activity-spacer { flex: 1; }
+
+        /* ============ SIDEBAR ============ */
+        #sidebar {
+            width: var(--sidebar-w);
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width var(--transition);
+            flex-shrink: 0;
+        }
+        #sidebar.collapsed { width: 0; border: none; }
+        .sidebar-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+            color: var(--text3); text-transform: uppercase;
+        }
+        .sidebar-content { flex:1; overflow-y:auto; padding: 0 8px 8px; }
+        
+        .file-item {
+            display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+            border-radius: 6px; cursor: pointer; font-size: 13px; transition: var(--transition);
+        }
+        .file-item:hover { background: var(--surface); }
+        .file-item.active { background: var(--surface2); }
+        .file-item .icon { font-size: 16px; width: 20px; text-align: center; }
+        .file-item .name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .file-item.folder { font-weight: 500; }
+        .file-children { padding-left: 20px; display: none; }
+        .file-children.open { display: block; }
+
+        /* ============ EDITOR AREA ============ */
+        #editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        #tabs-bar {
+            display: flex; gap: 2px; padding: 8px 8px 0; overflow-x: auto;
+            background: var(--bg2); scrollbar-width: none;
+        }
+        #tabs-bar::-webkit-scrollbar { display:none; }
+        .tab {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+            background: var(--bg3); font-size: 12px; cursor: pointer;
+            white-space: nowrap; border: 1px solid transparent;
+            transition: var(--transition); min-width: 100px;
+        }
+        .tab.active { background: var(--bg); border-color: var(--border); border-bottom-color: var(--bg); }
+        .tab .close { opacity:0; margin-left:4px; font-size:14px; transition:var(--transition); }
+        .tab:hover .close { opacity:1; }
+        
+        #editor-container {
+            flex: 1; display: flex; overflow: hidden; position: relative;
+        }
+        #gutter {
+            width: 50px; background: var(--bg2); padding: 12px 0;
+            font-family: var(--font); font-size: 13px; line-height: 1.6;
+            color: var(--text3); text-align: right; padding-right: 12px;
+            overflow: hidden; flex-shrink: 0; border-right: 1px solid var(--border);
+        }
+        #editor {
+            flex: 1; padding: 12px 16px;
+            font-family: var(--font); font-size: 13px; line-height: 1.6;
+            color: var(--text); background: var(--bg);
+            border: none; outline: none; resize: none;
+            overflow-y: auto; tab-size: 4;
+            -webkit-user-select: text; user-select: text;
+        }
+        #editor::placeholder { color: var(--text3); }
+        
+        #statusbar {
+            display: flex; align-items: center; gap: 16px; padding: 4px 12px;
+            background: var(--accent); color: #1e1e2e; font-size: 11px;
+            flex-shrink: 0; height: 24px;
+        }
+        #statusbar .spacer { flex:1; }
+
+        /* ============ RIGHT PANEL ============ */
+        #panel {
+            width: 360px; background: var(--bg2); border-left: 1px solid var(--border);
+            display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+            transition: width var(--transition);
+        }
+        #panel.collapsed { width:0; border:none; }
+        .panel-tabs {
+            display: flex; border-bottom: 1px solid var(--border); overflow-x: auto;
+        }
+        .panel-tab {
+            padding: 10px 14px; border: none; background: transparent;
+            color: var(--text3); cursor: pointer; font-size: 12px;
+            border-bottom: 2px solid transparent; transition: var(--transition);
+            white-space: nowrap;
+        }
+        .panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .panel-content { flex:1; overflow-y:auto; display:none; }
+        .panel-content.active { display:block; }
+
+        #preview-frame {
+            width: 100%; height: 100%; border: none; background: #fff;
+            border-radius: var(--radius-sm);
+        }
+        .device-frame {
+            margin: 16px auto; border: 3px solid var(--surface2);
+            border-radius: 24px; overflow: hidden; background: #fff;
+            transition: var(--transition);
+        }
+        .device-frame.mobile { width: 375px; height: 667px; }
+        .device-frame.tablet { width: 768px; height: 900px; }
+        .device-frame.desktop { width: 100%; height: 100%; border-radius: 0; margin:0; border:none; }
+
+        .terminal {
+            padding: 12px; font-family: var(--font); font-size: 12px;
+            background: var(--bg3); min-height: 100%;
+        }
+        .terminal .line { margin: 2px 0; white-space: pre-wrap; word-break: break-all; }
+        .terminal .prompt { color: var(--green); }
+        .terminal .cmd { color: var(--accent2); }
+        .terminal .out { color: var(--text2); }
+        .terminal .err { color: var(--red); }
+        .terminal-input-line {
+            display: flex; align-items: center; gap: 8px; margin-top: 4px;
+        }
+        .terminal-input-line .prompt { flex-shrink: 0; }
+        #terminal-input {
+            flex:1; background:transparent; border:none; color:var(--text);
+            font-family:var(--font); font-size:12px; outline:none; caret-color:var(--accent);
+            -webkit-user-select: text; user-select: text;
+        }
+
+        .logcat { padding: 8px; font-family: var(--font); font-size: 11px; }
+        .logcat .entry { padding: 4px 8px; border-bottom: 1px solid var(--border); display:flex; gap:8px; }
+        .logcat .level { font-weight:700; width:24px; flex-shrink:0; }
+        .logcat .level.V { color: var(--text3); }
+        .logcat .level.D { color: var(--accent2); }
+        .logcat .level.I { color: var(--green); }
+        .logcat .level.W { color: var(--yellow); }
+        .logcat .level.E { color: var(--red); }
+        .logcat .tag { color: var(--purple); flex-shrink:0; }
+        .logcat .msg { flex:1; word-break:break-all; }
+
+        .build-output {
+            padding: 12px; font-family: var(--font); font-size: 12px;
+            background: var(--bg3); min-height: 100%;
+        }
+        .build-output .success { color: var(--green); }
+        .build-output .error { color: var(--red); }
+        .build-output .warning { color: var(--yellow); }
+        .build-output .info { color: var(--accent2); }
+
+        #bottom-bar {
+            display: flex; align-items: center; height: var(--bottombar-h);
+            background: var(--bg2); border-top: 1px solid var(--border);
+            padding: 0 8px; padding-bottom: var(--safe-bottom);
+            flex-shrink: 0; gap: 4px;
+            justify-content: space-around;
+        }
+        .bottombar-btn {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 2px; padding: 6px 12px; border: none; background: transparent;
+            color: var(--text3); cursor: pointer; font-size: 10px;
+            border-radius: var(--radius-sm); transition: var(--transition);
+            min-width: 56px;
+        }
+        .bottombar-btn .ico { font-size: 22px; }
+        .bottombar-btn.active { color: var(--accent); }
+        .bottombar-btn:hover { background: var(--surface); }
+
+        .modal-overlay {
+            position: fixed; inset:0; background: rgba(0,0,0,0.6);
+            z-index: 200; display: flex; align-items: center; justify-content: center;
+            display: none;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg2); border-radius: var(--radius); width: 90%;
+            max-width: 600px; max-height: 80vh; overflow-y: auto;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        .modal-body { padding: 20px; }
+
+        .btn {
+            padding: 10px 20px; border-radius: var(--radius-sm); border: none;
+            font-family: var(--font-ui); font-size: 13px; cursor: pointer;
+            transition: var(--transition); font-weight: 500;
+        }
+        .btn-primary { background: var(--accent); color: #1e1e2e; }
+        .btn-primary:hover { opacity: 0.85; }
+        .btn-secondary { background: var(--surface); color: var(--text); }
+        .btn-danger { background: var(--red); color: #fff; }
+
+        #toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: var(--surface2); color: var(--text); padding: 12px 24px;
+            border-radius: 24px; font-size: 13px; z-index: 300;
+            box-shadow: var(--shadow); opacity: 0; transition: opacity var(--transition);
+            pointer-events: none;
+        }
+        #toast.show { opacity: 1; }
+
+        @media (max-width: 768px) {
+            #sidebar { position:fixed; left:0; top:var(--topbar-h); bottom:var(--bottombar-h); z-index:50; transform:translateX(-100%); transition:transform var(--transition); }
+            #sidebar.mobile-open { transform:translateX(0); }
+            #panel { width:100%; position:fixed; right:0; top:var(--topbar-h); bottom:var(--bottombar-h); z-index:50; transform:translateX(100%); transition:transform var(--transition); }
+            #panel.mobile-open { transform:translateX(0); }
+            #activity-bar { display:none; }
+            .device-frame.mobile { width:100%; height:500px; }
+        }
+        @media (max-width: 480px) {
+            #topbar .device-indicator, #topbar .logo span { display:none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- ==================== TOP BAR ==================== -->
+        <header id="topbar">
+            <a href="home.html" class="home-link" title="Back to Home">🏠</a>
+            <button class="icon-btn" onclick="toggleSidebar()" title="Project">📁</button>
+            <div class="logo">NexusCode<span> Studio</span></div>
+            <div class="spacer"></div>
+            <div class="device-indicator" id="device-indicator">📱 Pixel 7</div>
+            <button class="icon-btn" onclick="window.location.href='run.html'" title="Run onclick="runApp()" title="Run" Preview">▶️</button>
+            <button class="icon-btn" onclick="buildProject()" title="Build">🔨</button>
+            <select onchange="changeDevice(this.value)" style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:11px;">
+                <option value="pixel7">Pixel 7</option>
+                <option value="pixelTablet">Pixel Tablet</option>
+                <option value="desktop">Desktop</option>
+            </select>
+            <button class="icon-btn" onclick="toggleTheme()" title="Theme">🎨</button>
+        </header>
+
+        <!-- ==================== MAIN ==================== -->
+        <div id="main">
+            <!-- ACTIVITY BAR -->
+            <nav id="activity-bar">
+                <button class="activity-btn active" data-view="project" onclick="switchActivity('project', this)">📁</button>
+                <button class="activity-btn" data-view="search" onclick="switchActivity('search', this)">🔍</button>
+                <button class="activity-btn" data-view="git" onclick="switchActivity('git', this)">⎇</button>
+                <button class="activity-btn" data-view="run" onclick="switchActivity('run', this)">▶</button>
+                <div class="activity-spacer"></div>
+                <button class="activity-btn" data-view="extensions" onclick="switchActivity('extensions', this)">🧩</button>
+                <button class="activity-btn" data-view="settings" onclick="switchActivity('settings', this)">⚙</button>
+            </nav>
+
+            <!-- SIDEBAR -->
+            <aside id="sidebar">
+                <div class="sidebar-header">
+                    <span id="sidebar-title">PROJECT</span>
+                    <div>
+                        <button class="icon-btn" style="width:28px;height:28px;font-size:14px;" onclick="newFile()" title="New File">+</button>
+                        <button class="icon-btn" style="width:28px;height:28px;font-size:14px;" onclick="toggleSidebar()" title="Close">×</button>
+                    </div>
+                </div>
+                <div class="sidebar-content" id="sidebar-content"></div>
+            </aside>
+
+            <!-- EDITOR AREA -->
+            <section id="editor-area">
+                <div id="tabs-bar"></div>
+                <div id="editor-container">
+                    <div id="gutter"></div>
+                    <textarea id="editor" placeholder="// Start coding your Android app..." spellcheck="false"></textarea>
+                </div>
+                <div id="statusbar">
+                    <span id="status-file">MainActivity.java</span>
+                    <span class="spacer"></span>
+                    <span id="status-lang">Java</span>
+                    <span>|</span>
+                    <span id="status-lines">Ln 1, Col 1</span>
+                    <span>|</span>
+                    <span id="status-encoding">UTF-8</span>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL -->
+            <aside id="panel">
+                <div class="panel-tabs">
+                    <button class="panel-tab active" data-panel="preview" onclick="switchPanel('preview', this)">👁 Preview</button>
+                    <button class="panel-tab" data-panel="terminal" onclick="switchPanel('terminal', this)">⬛ Terminal</button>
+                    <button class="panel-tab" data-panel="logcat" onclick="switchPanel('logcat', this)">📋 Logcat</button>
+                    <button class="panel-tab" data-panel="build" onclick="switchPanel('build', this)">🔨 Build</button>
+                    <button class="panel-tab" data-panel="problems" onclick="switchPanel('problems', this)">⚠ Problems</button>
+                </div>
+                <div class="panel-content active" id="panel-preview">
+                    <div style="padding:8px;display:flex;gap:8px;align-items:center;">
+                        <button class="icon-btn" onclick="refreshPreview()" title="Refresh">🔄</button>
+                        <span style="font-size:11px;color:var(--text3);">Live Preview</span>
+                    </div>
+                    <div class="device-frame mobile" id="device-frame">
+                        <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+                    </div>
+                </div>
+                <div class="panel-content" id="panel-terminal">
+                    <div class="terminal" id="terminal-output">
+                        <div class="line prompt">NexusCode Terminal v2.0</div>
+                        <div class="line out">Type 'help' for commands</div>
+                    </div>
+                    <div class="terminal-input-line" style="padding:8px;">
+                        <span class="prompt">$</span>
+                        <input type="text" id="terminal-input" placeholder="gradlew assembleDebug..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="panel-content" id="panel-logcat">
+                    <div style="padding:8px;display:flex;gap:8px;">
+                        <button class="icon-btn" onclick="clearLogcat()">🗑</button>
+                        <select id="logcat-filter" onchange="filterLogcat()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:2px 8px;font-size:11px;">
+                            <option value="all">All</option>
+                            <option value="E">Errors</option>
+                            <option value="W">Warnings</option>
+                            <option value="I">Info</option>
+                        </select>
+                    </div>
+                    <div class="logcat" id="logcat-output"></div>
+                </div>
+                <div class="panel-content" id="panel-build">
+                    <div class="build-output" id="build-output">
+                        <div class="info">> gradlew assembleDebug</div>
+                        <div class="info">> Compiling sources...</div>
+                        <div class="success">BUILD SUCCESSFUL in 2s</div>
+                    </div>
+                </div>
+                <div class="panel-content" id="panel-problems">
+                    <div style="padding:12px;font-size:13px;color:var(--text2);">No problems detected ✅</div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- ==================== BOTTOM BAR ==================== -->
+        <nav id="bottom-bar">
+            <button class="bottombar-btn active" onclick="bottomNav('files', this)">
+                <span class="ico">📁</span> Files
+            </button>
+            <button class="bottombar-btn" onclick="bottomNav('terminal', this)">
+                <span class="ico">⬛</span> Terminal
+            </button>
+            <button class="bottombar-btn" onclick="bottomNav('run', this)">
+                <span class="ico">▶</span> Run
+            </button>
+            <button class="bottombar-btn" onclick="bottomNav('logcat', this)">
+                <span class="ico">📋</span> Logcat
+            </button>
+            <button class="bottombar-btn" onclick="bottomNav('git', this)">
+                <span class="ico">⎇</span> Git
+            </button>
+        </nav>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+    <div class="modal-overlay" id="modal-newfile">
+        <div class="modal">
+            <div class="modal-header">New File <button class="icon-btn" onclick="closeModal('modal-newfile')">×</button></div>
+            <div class="modal-body">
+                <select id="newfile-type" style="width:100%;padding:10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);margin-bottom:12px;font-size:13px;">
+                    <option value="java">Java Class (.java)</option>
+                    <option value="kt">Kotlin Class (.kt)</option>
+                    <option value="xml">XML Layout (.xml)</option>
+                    <option value="gradle">Gradle (.gradle)</option>
+                    <option value="html">HTML (.html)</option>
+                    <option value="css">CSS (.css)</option>
+                    <option value="js">JavaScript (.js)</option>
+                </select>
+                <input type="text" id="newfile-name" placeholder="MainActivity" style="width:100%;padding:10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:13px;">
+                <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="closeModal('modal-newfile')">Cancel</button>
+                    <button class="btn btn-primary" onclick="createNewFile()">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
+    <script>
+    const state = {
+        files: {
+            'app/src/main/java/com/nexuscode/MainActivity.java': {
+                name: 'MainActivity.java', type: 'java',
+                content: `package com.nexuscode;\n\nimport android.app.Activity;\nimport android.os.Bundle;\nimport android.widget.TextView;\n\npublic class MainActivity extends Activity {\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        setContentView(R.layout.activity_main);\n        \n        TextView tv = findViewById(R.id.hello);\n        tv.setText("Hello NexusCode!");\n    }\n}`
+            },
+            'app/src/main/res/layout/activity_main.xml': {
+                name: 'activity_main.xml', type: 'xml',
+                content: `<?xml version="1.0" encoding="utf-8"?>\n<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"\n    android:layout_width="match_parent"\n    android:layout_height="match_parent"\n    android:orientation="vertical"\n    android:padding="16dp">\n\n    <TextView\n        android:id="@+id/hello"\n        android:layout_width="wrap_content"\n        android:layout_height="wrap_content"\n        android:text="Hello World!"\n        android:textSize="24sp"/>\n\n</LinearLayout>`
+            },
+            'app/build.gradle': {
+                name: 'build.gradle', type: 'gradle',
+                content: `plugins {\n    id 'com.android.application'\n}\n\nandroid {\n    namespace 'com.nexuscode'\n    compileSdk 34\n\n    defaultConfig {\n        applicationId "com.nexuscode"\n        minSdk 24\n        targetSdk 34\n        versionCode 1\n        versionName "1.0"\n    }\n}`
+            },
+            'app/src/main/AndroidManifest.xml': {
+                name: 'AndroidManifest.xml', type: 'xml',
+                content: `<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <application android:allowBackup="true" android:label="NexusCode App">\n        <activity android:name=".MainActivity" android:exported="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN"/>\n                <category android:name="android.intent.category.LAUNCHER"/>\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>`
+            },
+            'index.html': {
+                name: 'index.html', type: 'html',
+                content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>NexusCode App</title>\n    <style>\n        body { font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea, #764ba2); color: white; }\n        .container { text-align: center; }\n        h1 { font-size: 48px; }\n        button { padding: 12px 32px; background: white; color: #667eea; border: none; border-radius: 24px; font-size: 16px; cursor: pointer; margin-top: 16px; }\n    </style>\n</head>\n<body>\n    <div class="container">\n        <h1>Hello NexusCode!</h1>\n        <p>Built with NexusCode Studio</p>\n        <button onclick="alert('It works!')">Click Me</button>\n    </div>\n</body>\n</html>`
+            }
+        },
+        activeFile: 'app/src/main/java/com/nexuscode/MainActivity.java',
+        openTabs: ['app/src/main/java/com/nexuscode/MainActivity.java'],
+        logcatEntries: [],
+        theme: 'dark',
+        device: 'pixel7',
+        activityView: 'project',
+        panelView: 'preview'
+    };
+
+    function init() {
+        renderFileTree();
+        renderTabs();
+        openFile(state.activeFile);
+        updateGutter();
+        refreshPreview();
+        setupEditorEvents();
+        setupTerminal();
+        addLogcatEntry('I', 'NexusCode', 'IDE initialized successfully');
+        addLogcatEntry('D', 'DeviceManager', 'Emulator: Pixel 7 (API 34)');
+        addLogcatEntry('I', 'GradleBuild', 'Project sync completed');
+        
+        // Handle URL params from other pages
+        const params = new URLSearchParams(window.location.search);
+        const openParam = params.get('open');
+        if (openParam === 'preview') switchPanel('preview', document.querySelector('.panel-tab[data-panel="preview"]'));
+        if (openParam === 'terminal') switchPanel('terminal', document.querySelector('.panel-tab[data-panel="terminal"]'));
+        if (openParam === 'build') switchPanel('build', document.querySelector('.panel-tab[data-panel="build"]'));
+    }
+
+    function renderFileTree() {
+        const container = document.getElementById('sidebar-content');
+        const tree = buildFileTree();
+        container.innerHTML = renderTreeNodes(tree);
+        attachTreeEvents();
+    }
+
+    function buildFileTree() {
+        const root = {};
+        Object.keys(state.files).forEach(path => {
+            const parts = path.split('/');
+            let current = root;
+            parts.forEach((part, i) => {
+                if (!current[part]) current[part] = i === parts.length - 1 ? { _file: path } : {};
+                current = current[part];
+            });
+        });
+        return root;
+    }
+
+    function renderTreeNodes(tree, level = 0) {
+        let html = '';
+        Object.keys(tree).sort().forEach(key => {
+            const node = tree[key];
+            const isFile = node._file !== undefined;
+            const path = isFile ? node._file : '';
+            const indent = level * 20;
+            const icon = isFile ? getFileIcon(state.files[path]?.type || '') : '📁';
+            const isActive = isFile && path === state.activeFile;
+            html += `<div class="file-item ${isFile ? 'file' : 'folder'} ${isActive ? 'active' : ''}" data-path="${path}" data-folder="${!isFile}" style="padding-left:${indent + 8}px"><span class="icon">${icon}</span><span class="name">${key}</span></div>`;
+            if (!isFile) { html += `<div class="file-children ${level < 1 ? 'open' : ''}">${renderTreeNodes(node, level + 1)}</div>`; }
+        });
+        return html;
+    }
+
+    function attachTreeEvents() {
+        document.querySelectorAll('.file-item.folder').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const children = this.nextElementSibling;
+                if (children?.classList.contains('file-children')) children.classList.toggle('open');
+            });
+        });
+        document.querySelectorAll('.file-item.file').forEach(item => {
+            item.addEventListener('click', function() { if (this.dataset.path) openFile(this.dataset.path); });
+        });
+    }
+
+    function getFileIcon(type) {
+        const icons = { java: '☕', kt: '🇰', xml: '📐', gradle: '🐘', html: '🌐', css: '🎨', js: '📜' };
+        return icons[type] || '📄';
+    }
+
+    function renderTabs() {
+        const container = document.getElementById('tabs-bar');
+        container.innerHTML = state.openTabs.map(path => {
+            const file = state.files[path];
+            return `<div class="tab ${path === state.activeFile ? 'active' : ''}" data-path="${path}"><span>${file?.name || path}</span><span class="close" data-close="${path}">×</span></div>`;
+        }).join('');
+        container.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function(e) { if (!e.target.classList.contains('close')) openFile(this.dataset.path); });
+        });
+        container.querySelectorAll('.close').forEach(close => {
+            close.addEventListener('click', function(e) { e.stopPropagation(); closeTab(this.dataset.close); });
+        });
+    }
+
+    function openFile(path) {
+        if (!state.files[path]) return;
+        state.activeFile = path;
+        if (!state.openTabs.includes(path)) state.openTabs.push(path);
+        document.getElementById('editor').value = state.files[path].content;
+        document.getElementById('status-file').textContent = state.files[path].name;
+        document.getElementById('status-lang').textContent = state.files[path].type.toUpperCase();
+        renderTabs(); updateGutter(); highlightActiveFile(); refreshPreview();
+    }
+
+    function closeTab(path) {
+        const idx = state.openTabs.indexOf(path);
+        if (idx > -1) {
+            state.openTabs.splice(idx, 1);
+            if (state.activeFile === path && state.openTabs.length > 0) openFile(state.openTabs[Math.min(idx, state.openTabs.length - 1)]);
+        }
+        renderTabs();
+    }
+
+    function highlightActiveFile() {
+        document.querySelectorAll('.file-item').forEach(item => item.classList.toggle('active', item.dataset.path === state.activeFile));
+    }
+
+    function setupEditorEvents() {
+        const editor = document.getElementById('editor');
+        editor.addEventListener('input', () => {
+            if (state.activeFile && state.files[state.activeFile]) state.files[state.activeFile].content = editor.value;
+            updateGutter(); updateStatusLine(); debounceRefreshPreview();
+        });
+        editor.addEventListener('keyup', updateStatusLine);
+        editor.addEventListener('click', updateStatusLine);
+        editor.addEventListener('scroll', () => { document.getElementById('gutter').scrollTop = editor.scrollTop; });
+    }
+
+    function updateGutter() {
+        const lines = document.getElementById('editor').value.split('\n');
+        document.getElementById('gutter').innerHTML = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+    }
+
+    function updateStatusLine() {
+        const editor = document.getElementById('editor');
+        const textBefore = editor.value.substring(0, editor.selectionStart);
+        const lines = textBefore.split('\n');
+        document.getElementById('status-lines').textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
+    }
+
+    let refreshTimeout;
+    function debounceRefreshPreview() { clearTimeout(refreshTimeout); refreshTimeout = setTimeout(refreshPreview, 500); }
+
+    function refreshPreview() {
+        let content = state.files['index.html']?.content || generateAndroidPreview();
+        const frame = document.getElementById('preview-frame');
+        const blob = new Blob([content], { type: 'text/html' });
+        frame.src = URL.createObjectURL(blob);
+    }
+
+    function generateAndroidPreview() {
+        const javaContent = state.files[state.activeFile]?.content || '';
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{font-family:'Inter',sans-serif;padding:20px;background:#1e1e2e;color:#cdd6f4;}.phone{max-width:375px;margin:0 auto;background:#111;border-radius:24px;padding:40px 16px;min-height:600px;}.screen{background:#fff;border-radius:8px;padding:20px;color:#000;min-height:400px;text-align:center;}h2{color:#6200EE;}</style></head><body><div class="phone"><div class="screen"><h2>📱 NexusCode App</h2><p>Preview from source</p><pre style="text-align:left;font-size:11px;background:#f5f5f5;padding:8px;border-radius:4px;">${escapeHtml(javaContent.substring(0, 300))}...</pre></div></div></body></html>`;
+    }
+
+    function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function changeDevice(device) {
+        state.device = device;
+        const frame = document.getElementById('device-frame');
+        frame.className = 'device-frame ' + (device === 'pixel7' ? 'mobile' : device === 'pixelTablet' ? 'tablet' : 'desktop');
+        document.getElementById('device-indicator').textContent = device === 'pixel7' ? '📱 Pixel 7' : device === 'pixelTablet' ? '📱 Pixel Tablet' : '💻 Desktop';
+    }
+
+    function setupTerminal() {
+        const input = document.getElementById('terminal-input');
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { const cmd = input.value.trim(); if (cmd) executeTerminalCommand(cmd); input.value = ''; }
+        });
+    }
+
+    function executeTerminalCommand(cmd) {
+        const output = document.getElementById('terminal-output');
+        output.innerHTML += `<div class="line"><span class="prompt">$</span> <span class="cmd">${cmd}</span></div>`;
+        const args = cmd.split(' '); const command = args[0].toLowerCase(); let result = '';
+        switch(command) {
+            case 'help': result = 'Available: help, ls, cat, clear, gradlew, adb, git, node, echo, date'; break;
+            case 'ls': result = Object.keys(state.files).map(f => '  ' + f).join('\n'); break;
+            case 'cat': const file = state.files[args[1]]; result = file ? file.content : `cat: ${args[1]}: No such file`; break;
+            case 'clear': output.innerHTML = ''; return;
+            case 'gradlew': result = args[1] === 'assembleDebug' ? (simulateBuild(output), '') : 'Usage: gradlew assembleDebug'; break;
+            case 'adb': result = args[1] === 'devices' ? 'emulator-5554\tdevice' : 'Android Debug Bridge v34.0.4'; break;
+            case 'git': result = args[1] === 'status' ? 'On branch main\nnothing to commit' : 'git: use status, log, branch'; break;
+            case 'node': result = args[1] === '--version' ? 'v20.10.0' : 'Node.js runtime'; break;
+            case 'echo': result = args.slice(1).join(' '); break;
+            case 'date': result = new Date().toString(); break;
+            default: result = `command not found: ${command}`;
+        }
+        if (result) output.innerHTML += `<div class="line out">${result}</div>`;
+        output.scrollTop = output.scrollHeight;
+    }
+
+    function simulateBuild(output) {
+        output.innerHTML += `<div class="line out">> Task :app:preBuild</div>`;
+        setTimeout(() => output.innerHTML += `<div class="line out">> Task :app:compileDebugJavaWithJavac</div>`, 500);
+        setTimeout(() => output.innerHTML += `<div class="line out">> Task :app:dexBuilderDebug</div>`, 1000);
+        setTimeout(() => {
+            output.innerHTML += `<div class="line success">BUILD SUCCESSFUL in 2s</div>`;
+            addLogcatEntry('I', 'GradleBuild', 'Build completed');
+            document.getElementById('build-output').innerHTML = '<div class="info">> gradlew assembleDebug</div><div class="success">BUILD SUCCESSFUL in 2s</div>';
+            output.scrollTop = output.scrollHeight;
+        }, 2000);
+    }
+
+    function addLogcatEntry(level, tag, msg) {
+        state.logcatEntries.push({ level, tag, msg, time: new Date().toLocaleTimeString() });
+        renderLogcat();
+    }
+
+    function renderLogcat() {
+        const container = document.getElementById('logcat-output');
+        const filter = document.getElementById('logcat-filter')?.value || 'all';
+        const entries = filter === 'all' ? state.logcatEntries : state.logcatEntries.filter(e => e.level === filter);
+        container.innerHTML = entries.slice(-50).map(e => `<div class="entry"><span class="level ${e.level}">${e.level}</span><span class="tag">${e.tag}</span><span class="msg">${e.msg}</span><span style="color:var(--text3);font-size:10px;">${e.time}</span></div>`).join('');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function clearLogcat() { state.logcatEntries = []; renderLogcat(); }
+    function filterLogcat() { renderLogcat(); }
+
+    function newFile() { document.getElementById('modal-newfile').classList.add('show'); }
+
+    function createNewFile() {
+        const type = document.getElementById('newfile-type').value;
+        const name = document.getElementById('newfile-name').value.trim();
+        if (!name) return;
+        const ext = type === 'java' ? '.java' : type === 'kt' ? '.kt' : type === 'xml' ? '.xml' : type === 'gradle' ? '.gradle' : type === 'html' ? '.html' : type === 'css' ? '.css' : '.js';
+        const path = `app/src/main/${type === 'xml' ? 'res/layout/' : 'java/com/nexuscode/'}${name}${ext}`;
+        const templates = { java: `package com.nexuscode;\n\npublic class ${name} {\n    \n}`, kt: `package com.nexuscode\n\nclass ${name} {\n    \n}`, xml: `<?xml version="1.0" encoding="utf-8"?>\n<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"\n    android:layout_width="match_parent"\n    android:layout_height="match_parent">\n\n</LinearLayout>`, gradle: `// ${name}\n`, html: '<!DOCTYPE html>\n<html>\n<head><title>' + name + '</title></head>\n<body>\n\n</body>\n</html>', css: '/* ' + name + ' */\n', js: '// ' + name + '\n' };
+        state.files[path] = { name: name + ext, content: templates[type] || '', type: type };
+        renderFileTree(); openFile(path); closeModal('modal-newfile');
+        document.getElementById('newfile-name').value = '';
+        toast('File created: ' + name + ext);
+        addLogcatEntry('I', 'FileManager', 'Created: ' + path);
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    function runApp() { window.location.href = 'run.html'; } // was: toast('▶ Running on ' + (state.device === 'pixel7' ? 'Pixel 7' : 'Pixel Tablet')); addLogcatEntry('I', 'RunManager', 'Starting app...'); switchPanel('preview', document.querySelector('.panel-tab[data-panel="preview"]')); refreshPreview(); }
+    function buildProject() { toast('🔨 Building...'); switchPanel('build', document.querySelector('.panel-tab[data-panel="build"]')); simulateBuild(document.getElementById('terminal-output')); }
+
+    function switchActivity(view, btn) {
+        state.activityView = view;
+        document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('sidebar-title').textContent = view.toUpperCase();
+    }
+
+    function switchPanel(panel, btn) {
+        state.panelView = panel;
+        document.querySelectorAll('.panel-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-' + panel)?.classList.add('active');
+        if (panel === 'terminal') setTimeout(() => document.getElementById('terminal-input')?.focus(), 100);
+    }
+
+    function bottomNav(view, btn) {
+        document.querySelectorAll('.bottombar-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (view === 'files') toggleSidebar(true);
+        else if (view === 'terminal') switchPanel('terminal', document.querySelector('.panel-tab[data-panel="terminal"]'));
+        else if (view === 'run') runApp();
+        else if (view === 'logcat') switchPanel('logcat', document.querySelector('.panel-tab[data-panel="logcat"]'));
+        else if (view === 'git') { switchPanel('terminal', document.querySelector('.panel-tab[data-panel="terminal"]')); document.getElementById('terminal-input').value = 'git status'; document.getElementById('terminal-input').dispatchEvent(new KeyboardEvent('keydown', {key:'Enter'})); }
+    }
+
+    function toggleSidebar(force) {
+        const sidebar = document.getElementById('sidebar');
+        if (force === true) { sidebar.classList.add('mobile-open'); sidebar.classList.remove('collapsed'); }
+        else if (force === false) { sidebar.classList.remove('mobile-open'); }
+        else if (window.innerWidth <= 768) sidebar.classList.toggle('mobile-open');
+        else sidebar.classList.toggle('collapsed');
+    }
+
+    function toggleTheme() {
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', state.theme);
+        localStorage.setItem('nexuscode_theme', state.theme);
+        toast('Theme: ' + state.theme);
+    }
+
+    function toast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg; el.classList.add('show');
+        clearTimeout(el._timeout);
+        el._timeout = setTimeout(() => el.classList.remove('show'), 2000);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
+            switch(e.key.toLowerCase()) {
+                case 's': e.preventDefault(); toast('💾 Saved'); break;
+                case 'b': e.preventDefault(); toggleSidebar(); break;
+                case '`': e.preventDefault(); switchPanel('terminal', document.querySelector('.panel-tab[data-panel="terminal"]')); break;
+                case 'p': e.preventDefault(); switchPanel('preview', document.querySelector('.panel-tab[data-panel="preview"]')); break;
+            }
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', init);
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            document.getElementById('panel').classList.remove('mobile-open');
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build output
+dist/
+build/
+*.zip
+*.tar.gz
+*.apk
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Cache
+.cache/
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temp
+*.tmp
+*.temp
+*.bak
+
+# Environment
+.env
+.env.local
+
+# Android
+android-app/app/build/
+android-app/.gradle/
+android-app/build/
+*.apk
+*.aab
+
+# Misc
+*.pid
+localStorage.json

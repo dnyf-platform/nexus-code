@@ -1,0 +1,83 @@
+@supports (height: 100dvh) {
+    #workspace {
+        height: calc(100dvh - var(--topbar-height) - var(--bottom-nav-height));
+    }
+    
+    @media (max-width: 768px) {
+        #sidebar.active, #panel.active {
+            height: calc(100dvh - var(--topbar-height) - var(--bottom-nav-height));
+        }
+    }
+}
+
+.editor-content {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.icon-button, .nav-button, .tab, .panel-tab {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+input, textarea, [contenteditable] {
+    -webkit-appearance: none;
+    border-radius: 0;
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    input, textarea, [contenteditable] {
+        font-size: 16px;
+    }
+    
+    .editor-gutter {
+        width: 35px;
+        min-width: 35px;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .icon-button:hover {
+        background: none;
+        color: var(--text-secondary);
+    }
+    
+    .icon-button:active {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    overscroll-behavior: none;
+}

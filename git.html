@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1e1e1e">
+    <title>Git - NexusCode</title>
+    <link rel="stylesheet" href="css/themes/dark-theme.css">
+    <style>
+        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
+        .page { max-width: 700px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
+        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
+        .back-btn:hover { color: var(--text-primary); }
+        .page-title { font-size: 24px; font-weight: 700; }
+        .branch-bar { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .branch-icon { color: #f85149; }
+        .section { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+        .section h4 { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .file-change { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border-color); }
+        .change-added { color: #3fb950; }
+        .change-modified { color: #d2991d; }
+        .change-deleted { color: #f85149; }
+        .action-btns { display: flex; gap: 8px; margin-top: 12px; }
+        .action-btns button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .btn-commit { background: #3fb950; color: white; }
+        .btn-push { background: var(--accent-primary, #007acc); color: white; }
+        .btn-pull { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
+        .commit-item { padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+        .commit-hash { color: var(--accent-primary); font-family: monospace; font-size: 12px; }
+        .commit-date { color: var(--text-muted); font-size: 11px; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
+        .nav-item.active { color: var(--accent-primary); }
+        .nav-icon { font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="topbar">
+            <a href="home.html" class="back-btn">← Back</a>
+            <h1 class="page-title">⎇ Git Manager</h1>
+        </div>
+
+        <div class="branch-bar">
+            <span class="branch-icon">⎇</span>
+            <strong>main</strong>
+            <span style="color:var(--text-muted);font-size:12px;">• 12 commits • up to date with origin/main</span>
+        </div>
+
+        <div class="section">
+            <h4>📝 Changes (3 files)</h4>
+            <div class="file-change"><span class="change-added">A</span> index.html</div>
+            <div class="file-change"><span class="change-modified">M</span> styles.css</div>
+            <div class="file-change"><span class="change-added">A</span> script.js</div>
+            <div class="action-btns">
+                <button class="btn-commit" onclick="alert('Changes committed!')">✓ Commit</button>
+                <button class="btn-push" onclick="alert('Pushing to remote...')">↑ Push</button>
+                <button class="btn-pull" onclick="alert('Pulling from remote...')">↓ Pull</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h4>📜 Recent Commits</h4>
+            <div class="commit-item">
+                <div><span class="commit-hash">abc1234</span> Update styles and layout</div>
+                <div class="commit-date">2 hours ago • Developer</div>
+            </div>
+            <div class="commit-item">
+                <div><span class="commit-hash">def5678</span> Add JavaScript functionality</div>
+                <div class="commit-date">5 hours ago • Developer</div>
+            </div>
+            <div class="commit-item">
+                <div><span class="commit-hash">ghi9012</span> Initial project setup</div>
+                <div class="commit-date">1 day ago • Developer</div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+        <a href="index.html" class="nav-item"><span class="nav-icon">✏️</span>Editor</a>
+        <a href="terminal/terminal.html" class="nav-item"><span class="nav-icon">⬛</span>Terminal</a>
+        <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
+    </nav>
+</body>
+</html>
