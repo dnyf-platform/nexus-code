@@ -1,0 +1,38 @@
+:root {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #2d2d30;
+    --bg-hover: #2a2d2e;
+    --bg-active: #37373d;
+    --bg-selection: #264f78;
+    
+    --text-primary: #cccccc;
+    --text-secondary: #969696;
+    --text-muted: #6a6a6a;
+    
+    --border-color: #3e3e42;
+    --border-focus: #007acc;
+    
+    --accent-primary: #007acc;
+    --accent-hover: #1c97ea;
+    --accent-active: #005999;
+    
+    --success: #4ec9b0;
+    --warning: #cca700;
+    --error: #f48771;
+    --info: #75beff;
+    
+    --scrollbar-bg: transparent;
+    --scrollbar-thumb: #424242;
+    --scrollbar-thumb-hover: #4f4f4f;
+    
+    --font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    --font-size: 14px;
+    --line-height: 1.6;
+    
+    --sidebar-width: 260px;
+    --panel-width: 400px;
+    --topbar-height: 40px;
+    --statusbar-height: 24px;
+    --bottom-nav-height: 48px;
+}

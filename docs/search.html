@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1e1e1e">
+    <title>Search - NexusCode</title>
+    <link rel="stylesheet" href="css/themes/dark-theme.css">
+    <style>
+        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
+        .page { max-width: 700px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
+        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
+        .back-btn:hover { color: var(--text-primary); }
+        .page-title { font-size: 24px; font-weight: 700; }
+        .search-container { position: relative; margin-bottom: 20px; }
+        .search-input { width: 100%; padding: 14px 16px; padding-left: 44px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 12px; color: var(--text-primary); font-size: 15px; outline: none; }
+        .search-input:focus { border-color: var(--accent-primary, #007acc); }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
+        .result-item { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
+        .result-item:hover { border-color: var(--accent-primary); }
+        .result-file { font-size: 12px; color: var(--accent-primary); margin-bottom: 4px; }
+        .result-line { font-size: 13px; font-family: monospace; }
+        .result-match { background: rgba(255, 170, 0, 0.3); padding: 0 2px; border-radius: 2px; }
+        .no-results { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
+        .nav-item.active { color: var(--accent-primary); }
+        .nav-icon { font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="topbar">
+            <a href="home.html" class="back-btn">← Back</a>
+            <h1 class="page-title">🔍 Search</h1>
+        </div>
+
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="search-input" placeholder="Search in files..." autofocus>
+        </div>
+
+        <div id="search-results">
+            <div class="no-results">Type to search across all project files</div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+        <a href="index.html" class="nav-item"><span class="nav-icon">✏️</span>Editor</a>
+        <a href="terminal/terminal.html" class="nav-item"><span class="nav-icon">⬛</span>Terminal</a>
+        <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span>Settings</a>
+    </nav>
+
+    <script>
+        const mockFiles = [
+            { file: 'index.html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <title>My Project</title>\n    <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n    <h1>Hello NexusCode!</h1>\n    <script src="script.js"></script>\n</body>\n</html>' },
+            { file: 'styles.css', content: 'body {\n    font-family: Arial, sans-serif;\n    margin: 40px;\n    background: #1e1e1e;\n    color: #cccccc;\n}\n\nh1 {\n    color: #58a6ff;\n    font-size: 2em;\n}' },
+            { file: 'script.js', content: 'console.log("Welcome to NexusCode!");\n\ndocument.addEventListener("DOMContentLoaded", () => {\n    const heading = document.querySelector("h1");\n    heading.style.color = "#58a6ff";\n});' },
+            { file: 'README.md', content: '# My Project\n\nBuilt with **NexusCode Studio**\n\n## Features\n- Live Preview\n- Terminal\n- File Management\n- Search' },
+        ];
+
+        function search(query) {
+            const results = document.getElementById('search-results');
+            if (!query) {
+                results.innerHTML = '<div class="no-results">Type to search across all project files</div>';
+                return;
+            }
+
+            const matches = [];
+            mockFiles.forEach(file => {
+                const lines = file.content.split('\n');
+                lines.forEach((line, index) => {
+                    if (line.toLowerCase().includes(query.toLowerCase())) {
+                        matches.push({ file: file.file, line: index + 1, content: line, query });
+                    }
+                });
+            });
+
+            if (matches.length === 0) {
+                results.innerHTML = '<div class="no-results">No results found for "' + query + '"</div>';
+                return;
+            }
+
+            results.innerHTML = matches.map(m => `
+                <div class="result-item" onclick="openFile('${m.file}')">
+                    <div class="result-file">📄 ${m.file}:${m.line}</div>
+                    <div class="result-line">${m.content.replace(new RegExp(m.query, 'gi'), match => `<span class="result-match">${match}</span>`)}</div>
+                </div>
+            `).join('');
+        }
+
+        function openFile(file) {
+            localStorage.setItem('nexuscode_open_file', file);
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('search-input').addEventListener('input', function() {
+            search(this.value);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+:root[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f3f3;
+    --bg-tertiary: #e8e8e8;
+    --bg-hover: #e0e0e0;
+    --bg-active: #d0d0d0;
+    --bg-selection: #add6ff;
+    
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    
+    --border-color: #d0d0d0;
+    --border-focus: #007acc;
+    
+    --accent-primary: #007acc;
+    --accent-hover: #1c97ea;
+    --accent-active: #005999;
+    
+    --success: #388a34;
+    --warning: #a88c00;
+    --error: #d32f2f;
+    --info: #005fb8;
+    
+    --scrollbar-bg: transparent;
+    --scrollbar-thumb: #c0c0c0;
+    --scrollbar-thumb-hover: #a0a0a0;
+}
