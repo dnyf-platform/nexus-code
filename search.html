@@ -2,49 +2,38 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1e1e1e">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Search - NexusCode</title>
-    <link rel="stylesheet" href="css/themes/dark-theme.css">
-    <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: var(--bg-primary, #1e1e1e); color: var(--text-primary, #ccc); font-family: -apple-system, sans-serif; overflow-x: hidden; }
-        .page { max-width: 700px; margin: 0 auto; padding: 20px; padding-top: calc(20px + var(--safe-top)); padding-bottom: calc(80px + var(--safe-bottom)); min-height: 100vh; }
-        .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-        .back-btn { font-size: 20px; text-decoration: none; color: var(--text-secondary); padding: 8px 12px; border-radius: 8px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); }
-        .back-btn:hover { color: var(--text-primary); }
-        .page-title { font-size: 24px; font-weight: 700; }
-        .search-container { position: relative; margin-bottom: 20px; }
-        .search-input { width: 100%; padding: 14px 16px; padding-left: 44px; background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 12px; color: var(--text-primary); font-size: 15px; outline: none; }
-        .search-input:focus { border-color: var(--accent-primary, #007acc); }
-        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
-        .result-item { background: var(--bg-secondary, #252526); border: 1px solid var(--border-color, #3e3e42); border-radius: 10px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
-        .result-item:hover { border-color: var(--accent-primary); }
-        .result-file { font-size: 12px; color: var(--accent-primary); margin-bottom: 4px; }
-        .result-line { font-size: 13px; font-family: monospace; }
-        .result-match { background: rgba(255, 170, 0, 0.3); padding: 0 2px; border-radius: 2px; }
-        .no-results { text-align: center; padding: 40px; color: var(--text-secondary); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 10px; text-decoration: none; border-radius: 6px; min-width: 48px; }
-        .nav-item.active { color: var(--accent-primary); }
-        .nav-icon { font-size: 20px; }
-    </style>
+    <link rel="stylesheet" href="css/unified.css">
 </head>
 <body>
-    <div class="page">
-        <div class="topbar">
-            <a href="home.html" class="back-btn">← Back</a>
+    <div class="container">
+        <header class="page-header">
+            <a href="home.html" class="back-btn">🏠 Home</a>
             <h1 class="page-title">🔍 Search</h1>
-        </div>
+            <span class="badge badge-primary" style="margin-left:auto;" id="result-count">Ready</span>
+        </header>
 
-        <div class="search-container">
+        <div class="search-wrapper">
             <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="search-input" placeholder="Search in files..." autofocus>
+            <input type="text" class="search-input" id="search-input" placeholder="Search across all project files..." autofocus>
+        </div>
+        
+        <div style="display:flex;gap:8px;margin-bottom:var(--space-md);">
+            <button class="btn btn-sm active">All Files</button>
+            <button class="btn btn-sm">HTML</button>
+            <button class="btn btn-sm">CSS</button>
+            <button class="btn btn-sm">JavaScript</button>
+            <button class="btn btn-sm">Markdown</button>
         </div>
 
         <div id="search-results">
-            <div class="no-results">Type to search across all project files</div>
+            <p style="color:var(--text-dim);text-align:center;padding:60px 20px;">
+                <span style="font-size:48px;display:block;margin-bottom:12px;">🔍</span>
+                Type to search across all project files
+            </p>
         </div>
     </div>
 
@@ -58,50 +47,49 @@
 
     <script>
         const mockFiles = [
-            { file: 'index.html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <title>My Project</title>\n    <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n    <h1>Hello NexusCode!</h1>\n    <script src="script.js"></script>\n</body>\n</html>' },
-            { file: 'styles.css', content: 'body {\n    font-family: Arial, sans-serif;\n    margin: 40px;\n    background: #1e1e1e;\n    color: #cccccc;\n}\n\nh1 {\n    color: #58a6ff;\n    font-size: 2em;\n}' },
-            { file: 'script.js', content: 'console.log("Welcome to NexusCode!");\n\ndocument.addEventListener("DOMContentLoaded", () => {\n    const heading = document.querySelector("h1");\n    heading.style.color = "#58a6ff";\n});' },
-            { file: 'README.md', content: '# My Project\n\nBuilt with **NexusCode Studio**\n\n## Features\n- Live Preview\n- Terminal\n- File Management\n- Search' },
+            { file: 'index.html', type: 'html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>NexusCode App</title>\n    <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n    <div class="container">\n        <h1>Hello NexusCode!</h1>\n        <p>Built with NexusCode Studio IDE</p>\n        <button onclick="handleClick()">Click Me</button>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>' },
+            { file: 'styles.css', type: 'css', content: 'body {\n    font-family: "Inter", system-ui, sans-serif;\n    margin: 40px;\n    background: linear-gradient(135deg, #667eea, #764ba2);\n    color: white;\n    min-height: 100vh;\n}\n\n.container {\n    text-align: center;\n    padding: 40px;\n}\n\nh1 {\n    font-size: 48px;\n    color: #ffffff;\n    margin-bottom: 16px;\n}\n\nbutton {\n    padding: 12px 32px;\n    background: white;\n    color: #667eea;\n    border: none;\n    border-radius: 24px;\n    font-size: 16px;\n    cursor: pointer;\n    transition: transform 0.2s;\n}\n\nbutton:hover {\n    transform: scale(1.05);\n}' },
+            { file: 'script.js', type: 'javascript', content: 'console.log("NexusCode App started");\n\nlet clickCount = 0;\n\nfunction handleClick() {\n    clickCount++;\n    console.log("Button clicked:", clickCount);\n    alert("Clicked " + clickCount + " time" + (clickCount > 1 ? "s" : "") + "!");\n}\n\ndocument.addEventListener("DOMContentLoaded", () => {\n    console.log("Page fully loaded");\n    console.log("Ready for development!");\n});' },
+            { file: 'README.md', type: 'markdown', content: '# NexusCode Project\n\nBuilt with **NexusCode Studio IDE**\n\n## Features\n\n- ✏️ Code Editor with syntax highlighting\n- 👁 Live Preview with device emulators\n- ⬛ Integrated Terminal\n- 📊 Project Dashboard\n- ⎇ Git Version Control\n- 🔍 Global Search\n\n## Getting Started\n\n1. Open `index.html` in the editor\n2. Make changes and see live preview\n3. Use terminal for commands\n4. Commit changes with Git\n\n## Tech Stack\n\n- HTML5\n- CSS3 (Flexbox, Grid, Custom Properties)\n- JavaScript (ES6+)\n- Service Worker (PWA)' },
         ];
 
-        function search(query) {
+        document.getElementById('search-input').addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
             const results = document.getElementById('search-results');
+            const count = document.getElementById('result-count');
+            
             if (!query) {
-                results.innerHTML = '<div class="no-results">Type to search across all project files</div>';
+                results.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:60px 20px;"><span style="font-size:48px;display:block;margin-bottom:12px;">🔍</span>Type to search across all project files</p>';
+                count.textContent = 'Ready';
                 return;
             }
 
             const matches = [];
-            mockFiles.forEach(file => {
-                const lines = file.content.split('\n');
-                lines.forEach((line, index) => {
-                    if (line.toLowerCase().includes(query.toLowerCase())) {
-                        matches.push({ file: file.file, line: index + 1, content: line, query });
+            mockFiles.forEach(f => {
+                const lines = f.content.split('\n');
+                lines.forEach((line, i) => {
+                    if (line.toLowerCase().includes(query)) {
+                        matches.push({ file: f.file, type: f.type, line: i + 1, content: line.trim(), query });
                     }
                 });
             });
 
-            if (matches.length === 0) {
-                results.innerHTML = '<div class="no-results">No results found for "' + query + '"</div>';
-                return;
-            }
+            count.textContent = matches.length + ' result' + (matches.length !== 1 ? 's' : '');
 
-            results.innerHTML = matches.map(m => `
-                <div class="result-item" onclick="openFile('${m.file}')">
-                    <div class="result-file">📄 ${m.file}:${m.line}</div>
-                    <div class="result-line">${m.content.replace(new RegExp(m.query, 'gi'), match => `<span class="result-match">${match}</span>`)}</div>
-                </div>
-            `).join('');
-        }
+            results.innerHTML = matches.length === 0
+                ? '<div class="card" style="text-align:center;padding:40px;"><p style="color:var(--text-dim);">No results found for <strong>"' + query + '"</strong></p></div>'
+                : matches.map((m, i) => `
+                    <div class="card list-item fade-in" style="animation-delay:${i * 0.02}s;display:flex;align-items:flex-start;gap:12px;cursor:pointer;" onclick="openFile('${m.file}')">
+                        <span style="font-family:var(--font-mono);font-size:11px;color:var(--accent);white-space:nowrap;">📄 ${m.file}:${m.line}</span>
+                        <span style="flex:1;font-family:var(--font-mono);font-size:12px;word-break:break-all;">${m.content.replace(new RegExp(m.query, 'gi'), match => '<mark style="background:#d2991d33;color:#d2991d;padding:0 2px;border-radius:2px;">' + match + '</mark>')}</span>
+                    </div>
+                `).join('');
+        });
 
         function openFile(file) {
             localStorage.setItem('nexuscode_open_file', file);
             window.location.href = 'index.html';
         }
-
-        document.getElementById('search-input').addEventListener('input', function() {
-            search(this.value);
-        });
     </script>
 </body>
 </html>
