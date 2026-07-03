@@ -10,7 +10,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Made with Love](https://img.shields.io/badge/made%20with-❤️-red.svg)]()
 
-**🌐 [Live Demo](https://dnyf-platform.github.io/nexus-code/home.html)**
+**🌐 [Live Demo](https://dnyf-platform.github.io/nexus-code/)**
 
 </div>
 
@@ -189,8 +189,6 @@ python3 -m http.server 8080
 pm2 start ecosystem.config.js
 ```
 
-Open: http://localhost:8080/home.html
-
 Option 3: Docker
 
 ```bash
@@ -200,7 +198,7 @@ docker-compose up -d
 Option 4: GitHub Pages
 
 Already deployed at:
-🌐 https://dnyf-platform.github.io/nexus-code/home.html
+🌐 https://dnyf-platform.github.io/nexus-code/
 
 ---
 
